@@ -7,6 +7,8 @@ from cStringIO import StringIO
 import struct
 import logging
 
+from . import parsers
+
 def read_struct(f, fmt):
 	sz = struct.calcsize(fmt)
 	string = f.read(sz)
@@ -48,91 +50,16 @@ class TagEnum(object):
 	natural_language      = 0x48
 	mime_media_type       = 0x49
 
-
 def is_section_tag(tag):
 	return (tag & TagEnum.SECTIONS_MASK) == TagEnum.SECTIONS
 
 
-class AttributeValue(object):
-	def __init__(self, tag, value_str):
-		self.tag = tag
-		self.value_str = value_str
-
-	def __cmp__(self, other):
-		return cmp(type(self), type(other)) or cmp(self.tag, other.tag) or cmp(self.value_str, other.value_str)
-
-	def __repr__(self):
-		return 'Attribute(0x%02x, %r)' % (self.tag, self.value_str,)
-
-	def text(self):
-		if self.tag in {
-			TagEnum.octet_str,
-			TagEnum.datetime_str,
-			TagEnum.resolution,
-			TagEnum.range_of_integer,
-			TagEnum.text_with_language,
-			TagEnum.name_with_language,
-			TagEnum.text_without_language,
-			TagEnum.name_without_language,
-			TagEnum.keyword,
-			TagEnum.uri,
-			TagEnum.uri_scheme,
-			TagEnum.charset,
-			TagEnum.natural_language,
-			TagEnum.mime_media_type,
-		}:
-			return self.value_str
-
-
-class Section(object):
-	def __init__(self, attributes=None):
-		self._attributes = attributes if attributes is not None else {}
-
-	def add(self, name, value):
-		assert isinstance(value, AttributeValue)
-		self._attributes.setdefault(name, []).append(value)
-
-	def lookup(self, name):
-		return self._attributes[name]
-
-	def only(self, name):
-		value, = self.lookup(name)
-		return value
-
-	def __repr__(self):
-		return 'Section(%r)' % (self._attributes,)
-
-
 class IppRequest(object):
-	def __init__(self, version, opid_or_status, request_id, sections):
+	def __init__(self, version, opid_or_status, request_id, attributes):
 		self.version = version # (major, minor)
 		self.opid_or_status = opid_or_status
 		self.request_id = request_id
-		self._sections = sections
-
-	def get_section(self, section_tag):
-		return self._sections[section_tag]
-
-	def get_or_make_section(self, section_tag):
-		# XXX not sure if this is a good idea
-		assert is_section_tag(section_tag)
-		try:
-			return self._sections[section_tag]
-		except KeyError:
-			self._sections[section_tag] = Section()
-			return self._sections[section_tag]
-
-	@property
-	def operation(self):
-		return self.get_section(TagEnum.operation_delimiter)
-
-	@property
-	def job(self):
-		return self.get_section(TagEnum.job_delimiter)
-
-	@property
-	def printer(self):
-		return self.get_section(TagEnum.printer_delimiter)
+		self._attributes = attributes
 
 	def __cmp__(self, other):
 		return cmp(type(self), type(other)) or cmp(self._attributes, other._attributes)
@@ -149,7 +76,7 @@ class IppRequest(object):
 		version = read_struct(f, b'>bb') # (major, minor)
 		operation_id_or_status_code, request_id = read_struct(f, b'>hi')
 
-		sections = {}
+		attributes = {}
 		current_section = None
 		current_name = None
 		while True:
@@ -157,7 +84,7 @@ class IppRequest(object):
 			if tag == TagEnum.end_delimiter:
 				break
 			elif is_section_tag(tag):
-				current_section = sections.setdefault(tag, Section())
+				current_section = tag
 				current_name = None
 			else:
 				if current_section is None:
@@ -175,8 +102,24 @@ class IppRequest(object):
 
 				value_len, = read_struct(f, b'>h')
 				value_str = f.read(value_len)
-				current_section.add(current_name, AttributeValue(tag, value_str))
+				attributes.setdefault((current_section, current_name, tag), []).append(value_str)
 
-		return cls(version, operation_id_or_status_code, request_id, sections)
+		return cls(version, operation_id_or_status_code, request_id, attributes)
 		
+	def to_string(self):
+		raise NotImplementedError() # TODO
 
+	def lookup(self, section, name, tag):
+		return self._attributes[section, name, tag]
+
+	def only(self, section, name, tag):
+		items = self.lookup(section, name, tag)
+		if len(items) == 1:
+			return items[0]
+		elif len(items) == 0:
+			raise RuntimeError('self._attributes[%r, %r, %r] is empty list' % (section, name, tag,))
+		else:
+			raise ValueError('self._attributes[%r, %r, %r] has more than one value' % (section, name, tag,))
+
+	def keyword(self, section, name):
+		return parsers.keyword(self.only(section, name, TagEnum.keyword))

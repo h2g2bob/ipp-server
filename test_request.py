@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from .request import IppRequest, TagEnum, AttributeValue
+from .request import IppRequest, TagEnum
 
 import unittest
 import logging
@@ -15,52 +15,56 @@ class TestIppRequest(unittest.TestCase):
 		msg = IppRequest.from_string(self.printer_discovery)
 		self.assertEqual(msg, IppRequest.from_string(msg.to_string()))
 
+	def test_attr_only(self):
+		msg = IppRequest.from_string(self.printer_discovery)
+		self.assertEqual(msg.only(TagEnum.operation_delimiter, b'attributes-charset', TagEnum.charset,), b'utf-8')
+
 	def test_attr_lookup(self):
 		msg = IppRequest.from_string(self.printer_discovery)
-		self.assertEqual(msg.operation.only('attributes-charset').text(), 'utf-8')
+		self.assertEqual(msg.lookup(TagEnum.operation_delimiter, b'attributes-charset', TagEnum.charset,), [b'utf-8'])
 
-	def test_attr_noexist(self):
+	def test_attr_only_noexist(self):
 		msg = IppRequest.from_string(self.printer_discovery)
-		self.assertRaises(KeyError, msg.operation.only, 'no-exist')
+		self.assertRaises(KeyError, msg.only, TagEnum.operation_delimiter, b'no-exist', TagEnum.charset)
 
-	def test_section_noexist(self):
+	def test_attr_only_noexist(self):
 		msg = IppRequest.from_string(self.printer_discovery)
-		self.assertRaises(KeyError, msg.get_section, 0x0f)
+		self.assertRaises(KeyError, msg.lookup, TagEnum.operation_delimiter, b'no-exist', TagEnum.charset)
 
 	def test_parse(self):
 		msg = IppRequest.from_string(self.printer_discovery)
-		self.assertEqual(msg.operation._attributes, {
-			'requested-attributes': [
-				AttributeValue(TagEnum.keyword, 'auth-info-required'),
-				AttributeValue(TagEnum.keyword, 'device-uri'),
-				AttributeValue(TagEnum.keyword, 'job-sheets-default'),
-				AttributeValue(TagEnum.keyword, 'marker-change-time'),
-				AttributeValue(TagEnum.keyword, 'marker-colors'),
-				AttributeValue(TagEnum.keyword, 'marker-high-levels'),
-				AttributeValue(TagEnum.keyword, 'marker-levels'),
-				AttributeValue(TagEnum.keyword, 'marker-low-levels'),
-				AttributeValue(TagEnum.keyword, 'marker-message'),
-				AttributeValue(TagEnum.keyword, 'marker-names'),
-				AttributeValue(TagEnum.keyword, 'marker-types'),
-				AttributeValue(TagEnum.keyword, 'printer-commands'),
-				AttributeValue(TagEnum.keyword, 'printer-defaults'),
-				AttributeValue(TagEnum.keyword, 'printer-info'),
-				AttributeValue(TagEnum.keyword, 'printer-is-accepting-jobs'),
-				AttributeValue(TagEnum.keyword, 'printer-is-shared'),
-				AttributeValue(TagEnum.keyword, 'printer-location'),
-				AttributeValue(TagEnum.keyword, 'printer-make-and-model'),
-				AttributeValue(TagEnum.keyword, 'printer-name'),
-				AttributeValue(TagEnum.keyword, 'printer-state'),
-				AttributeValue(TagEnum.keyword, 'printer-state-change-time'),
-				AttributeValue(TagEnum.keyword, 'printer-state-reasons'),
-				AttributeValue(TagEnum.keyword, 'printer-type'),
-				AttributeValue(TagEnum.keyword, 'printer-uri-supported')],
-			'attributes-charset': [
-				AttributeValue(TagEnum.charset, 'utf-8')],
-			'attributes-natural-language': [
-				AttributeValue(TagEnum.natural_language, 'en-gb')],
-			'requesting-user-name': [
-				AttributeValue(TagEnum.name_without_language, 'user')]})
+		self.assertEqual(msg._attributes, {
+			(TagEnum.operation_delimiter, b'requested-attributes', TagEnum.keyword): [
+				b'auth-info-required',
+				b'device-uri',
+				b'job-sheets-default',
+				b'marker-change-time',
+				b'marker-colors',
+				b'marker-high-levels',
+				b'marker-levels',
+				b'marker-low-levels',
+				b'marker-message',
+				b'marker-names',
+				b'marker-types',
+				b'printer-commands',
+				b'printer-defaults',
+				b'printer-info',
+				b'printer-is-accepting-jobs',
+				b'printer-is-shared',
+				b'printer-location',
+				b'printer-make-and-model',
+				b'printer-name',
+				b'printer-state',
+				b'printer-state-change-time',
+				b'printer-state-reasons',
+				b'printer-type',
+				b'printer-uri-supported'],
+			(TagEnum.operation_delimiter, b'attributes-charset', TagEnum.charset): [
+				b'utf-8'],
+			(TagEnum.operation_delimiter, b'attributes-natural-language', TagEnum.natural_language): [
+				b'en-gb'],
+			(TagEnum.operation_delimiter, b'requesting-user-name', TagEnum.name_without_language): [
+				b'user']})
 
 
 if __name__=='__main__':
