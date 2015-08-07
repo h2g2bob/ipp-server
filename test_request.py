@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from .request import IppRequest, TagEnum
+from .request import IppRequest, TagEnum, SectionEnum
 
 import unittest
 import logging
@@ -17,24 +17,24 @@ class TestIppRequest(unittest.TestCase):
 
 	def test_attr_only(self):
 		msg = IppRequest.from_string(self.printer_discovery)
-		self.assertEqual(msg.only(TagEnum.operation_delimiter, b'attributes-charset', TagEnum.charset,), b'utf-8')
+		self.assertEqual(msg.only(SectionEnum.operation, b'attributes-charset', TagEnum.charset,), b'utf-8')
 
 	def test_attr_lookup(self):
 		msg = IppRequest.from_string(self.printer_discovery)
-		self.assertEqual(msg.lookup(TagEnum.operation_delimiter, b'attributes-charset', TagEnum.charset,), [b'utf-8'])
+		self.assertEqual(msg.lookup(SectionEnum.operation, b'attributes-charset', TagEnum.charset,), [b'utf-8'])
 
 	def test_attr_only_noexist(self):
 		msg = IppRequest.from_string(self.printer_discovery)
-		self.assertRaises(KeyError, msg.only, TagEnum.operation_delimiter, b'no-exist', TagEnum.charset)
+		self.assertRaises(KeyError, msg.only, SectionEnum.operation, b'no-exist', TagEnum.charset)
 
 	def test_attr_only_noexist(self):
 		msg = IppRequest.from_string(self.printer_discovery)
-		self.assertRaises(KeyError, msg.lookup, TagEnum.operation_delimiter, b'no-exist', TagEnum.charset)
+		self.assertRaises(KeyError, msg.lookup, SectionEnum.operation, b'no-exist', TagEnum.charset)
 
 	def test_parse(self):
 		msg = IppRequest.from_string(self.printer_discovery)
 		self.assertEqual(msg._attributes, {
-			(TagEnum.operation_delimiter, b'requested-attributes', TagEnum.keyword): [
+			(SectionEnum.operation, b'requested-attributes', TagEnum.keyword): [
 				b'auth-info-required',
 				b'device-uri',
 				b'job-sheets-default',
@@ -59,11 +59,11 @@ class TestIppRequest(unittest.TestCase):
 				b'printer-state-reasons',
 				b'printer-type',
 				b'printer-uri-supported'],
-			(TagEnum.operation_delimiter, b'attributes-charset', TagEnum.charset): [
+			(SectionEnum.operation, b'attributes-charset', TagEnum.charset): [
 				b'utf-8'],
-			(TagEnum.operation_delimiter, b'attributes-natural-language', TagEnum.natural_language): [
+			(SectionEnum.operation, b'attributes-natural-language', TagEnum.natural_language): [
 				b'en-gb'],
-			(TagEnum.operation_delimiter, b'requesting-user-name', TagEnum.name_without_language): [
+			(SectionEnum.operation, b'requesting-user-name', TagEnum.name_without_language): [
 				b'user']})
 
 

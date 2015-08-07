@@ -14,16 +14,22 @@ def read_struct(f, fmt):
 	string = f.read(sz)
 	return struct.unpack(fmt, string)
 
-class TagEnum(object):
+class SectionEnum(object):
 	# delimiters (sections)
 	SECTIONS              = 0x00
 	SECTIONS_MASK         = 0xf0
-	operation_delimiter   = 0x01
-	job_delimiter         = 0x02
-	end_delimiter         = 0x03
-	printer_delimiter     = 0x04
-	unsupported_delimiter = 0x05
+	operation   = 0x01
+	job         = 0x02
+	END         = 0x03
+	printer     = 0x04
+	unsupported = 0x05
 
+	@classmethod
+	def is_section_tag(cls, tag):
+		return (tag & cls.SECTIONS_MASK) == cls.SECTIONS
+
+
+class TagEnum(object):
 	unsupported_value     = 0x10
 	unknown_value         = 0x12
 	no_value              = 0x13
@@ -49,9 +55,6 @@ class TagEnum(object):
 	charset               = 0x47
 	natural_language      = 0x48
 	mime_media_type       = 0x49
-
-def is_section_tag(tag):
-	return (tag & TagEnum.SECTIONS_MASK) == TagEnum.SECTIONS
 
 
 class IppRequest(object):
@@ -81,9 +84,9 @@ class IppRequest(object):
 		current_name = None
 		while True:
 			tag, = read_struct(f, b'>B')
-			if tag == TagEnum.end_delimiter:
+			if tag == SectionEnum.END:
 				break
-			elif is_section_tag(tag):
+			elif SectionEnum.is_section_tag(tag):
 				current_section = tag
 				current_name = None
 			else:
