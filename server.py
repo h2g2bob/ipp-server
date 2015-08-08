@@ -12,19 +12,25 @@ import logging
 
 from . import http
 from . import request
+from . import logic
 
 class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 	def handle(self):
-		http.read_http(self.rfile)
-		req = request.IppRequest.from_file(self.rfile)
-		http.write_http(self.wfile)
-		resp = req
-		resp.to_file(self.wfile)
+		try:
+			http.read_http(self.rfile)
+			req = request.IppRequest.from_file(self.rfile)
+			logging.debug('Got request %r', req)
+			resp = logic.respond(req)
+			logging.debug('Using response %r', req)
+		except Exception:
+			logging.exception('Failed to parse')
+			http.write_http_error(self.wfile)
+		else:
+			http.write_http(self.wfile)
+			resp.to_file(self.wfile)
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
-	def setup(self):
-		self.socket.setsockopt(socket.SO_REUSEADDR)
-		super(ThreadedTCPServer, self).setup(self)
+	allow_reuse_address = True
 
 def wait_until_ctrl_c():
 	try:
@@ -33,10 +39,8 @@ def wait_until_ctrl_c():
 	except KeyboardInterrupt:
 		return
 
-
-
 if __name__ == "__main__":
-	_, port = sys.argv
+	_, port = sys.argv # TODO use argparse
 
 	logging.basicConfig(level=logging.DEBUG)
 

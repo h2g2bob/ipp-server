@@ -74,7 +74,11 @@ class IppRequest(object):
 		return cmp(type(self), type(other)) or cmp(self._attributes, other._attributes)
 
 	def __repr__(self):
-		return 'IppRequest(%r)' % (self._attributes,)
+		return 'IppRequest(%r 0x%02x 0x%02x %r)' % (
+			self.version,
+			self.opid_or_status,
+			self.request_id,
+			self._attributes,)
 
 	@classmethod
 	def from_string(cls, string):
@@ -90,6 +94,7 @@ class IppRequest(object):
 		current_name = None
 		while True:
 			tag, = read_struct(f, b'>B')
+
 			if tag == SectionEnum.END:
 				break
 			elif SectionEnum.is_section_tag(tag):
