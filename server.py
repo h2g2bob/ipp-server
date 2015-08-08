@@ -22,11 +22,11 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 			req = request.IppRequest.from_file(self.rfile)
 			logging.debug('Got request %r', req)
 			resp = logic.respond(req)
-			logging.debug('Using response %r', req)
 		except Exception:
 			logging.exception('Failed to parse')
 			http.write_http_error(self.wfile)
 		else:
+			logging.debug('Using response %r', resp)
 			http.write_http(self.wfile)
 			resp.to_file(self.wfile)
 
