@@ -9,6 +9,7 @@ import SocketServer
 import time
 import sys
 import logging
+import argparse
 
 from . import http
 from . import request
@@ -39,19 +40,25 @@ def wait_until_ctrl_c():
 	except KeyboardInterrupt:
 		return
 
-if __name__ == "__main__":
-	_, port = sys.argv # TODO use argparse
+def parse_args():
+	parser = argparse.ArgumentParser(description='An IPP server')
+	parser.add_argument('-v', '--verbose', action='count', help='Add debugging')
+	parser.add_argument('--host', type=str, default='localhost', metavar='HOST', help='Address to listen on')
+	parser.add_argument('port', type=int, metavar='PORT', help='Port to listen on')
+	return parser.parse_args()
 
+def main(args):
 	logging.basicConfig(level=logging.DEBUG)
 
-	HOST, PORT = "localhost", int(port)
-
-	server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
+	server = ThreadedTCPServer((args.host, args.port), ThreadedTCPRequestHandler)
 	logging.debug('Listening on %r', server.server_address)
 
 	server_thread = threading.Thread(target=server.serve_forever)
 	server_thread.daemon = True
 	server_thread.start()
 	wait_until_ctrl_c()
-	print("Ready to shut down")
+	logging.info('Ready to shut down')
 	server.shutdown()
+
+if __name__ == "__main__":
+	main(parse_args())
