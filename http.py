@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 def read_http(f):
-	first_line = f.readine()
+	first_line = f.readline()
 	if not first_line.startswith(b'POST / HTTP/'):
 		raise ValueError('Invalid request')
 	for line in f.readline():
