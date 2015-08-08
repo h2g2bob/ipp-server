@@ -6,6 +6,8 @@ from __future__ import unicode_literals
 from cStringIO import StringIO
 import struct
 import logging
+import operator
+import itertools
 
 from . import parsers
 
@@ -13,6 +15,10 @@ def read_struct(f, fmt):
 	sz = struct.calcsize(fmt)
 	string = f.read(sz)
 	return struct.unpack(fmt, string)
+
+def write_struct(f, fmt, *args):
+	data = struct.pack(fmt, *args)
+	f.write(data)
 
 class SectionEnum(object):
 	# delimiters (sections)
@@ -110,7 +116,28 @@ class IppRequest(object):
 		return cls(version, operation_id_or_status_code, request_id, attributes)
 		
 	def to_string(self):
-		raise NotImplementedError() # TODO
+		sio = StringIO()
+		self.to_file(sio)
+		return sio.getvalue()
+
+	def to_file(self, f):
+		version_major, version_minor = 1, 1
+		write_struct(f, b'>bb', version_major, version_minor)
+		write_struct(f, b'>hi', self.opid_or_status, self.request_id)
+		for section, attrs_in_section in itertools.groupby(sorted(self._attributes.keys()), operator.itemgetter(0)):
+			write_struct(f, b'>B', section)
+			for key in attrs_in_section:
+				_section, name, tag = key
+				for i, value in enumerate(self._attributes[key]):
+					write_struct(f, b'>B', tag)
+					if i == 0:
+						write_struct(f, b'>h', len(name))
+						f.write(name)
+					else:
+						write_struct(f, b'>h', 0)
+					write_struct(f, b'>h', len(value))
+					f.write(value)
+		write_struct(f, b'>B', SectionEnum.END)
 
 	def lookup(self, section, name, tag):
 		return self._attributes[section, name, tag]
