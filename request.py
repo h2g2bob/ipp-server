@@ -4,21 +4,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from cStringIO import StringIO
-import struct
 import logging
 import operator
 import itertools
 
-from . import parsers
-
-def read_struct(f, fmt):
-	sz = struct.calcsize(fmt)
-	string = f.read(sz)
-	return struct.unpack(fmt, string)
-
-def write_struct(f, fmt, *args):
-	data = struct.pack(fmt, *args)
-	f.write(data)
+from .parsers import read_struct, write_struct
 
 class SectionEnum(object):
 	# delimiters (sections)
@@ -155,6 +145,3 @@ class IppRequest(object):
 			raise RuntimeError('self._attributes[%r, %r, %r] is empty list' % (section, name, tag,))
 		else:
 			raise ValueError('self._attributes[%r, %r, %r] has more than one value' % (section, name, tag,))
-
-	def keyword(self, section, name):
-		return parsers.keyword(self.only(section, name, TagEnum.keyword))
