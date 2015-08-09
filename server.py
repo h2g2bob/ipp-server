@@ -29,6 +29,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 			logging.debug('Using response %r', resp)
 			http.write_http(self.wfile)
 			resp.to_file(self.wfile)
+		self.wfile.flush()
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 	allow_reuse_address = True

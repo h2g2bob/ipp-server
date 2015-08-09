@@ -16,6 +16,7 @@ def write_http(f):
 	f.write(b'\r\n'.join((
 		b'HTTP/1.1 200 OK',
 		b'Server: ipp-server',
+		b'',
 		b'')))
 
 def write_http_error(f):
