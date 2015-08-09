@@ -23,13 +23,15 @@ class OperationEnum(object):
 
 	# 0x4000 - 0xFFFF is for extensions
 	# CUPS extensions listed here: http://uw714doc.sco.com/en/cups/ipp.html
+	cups_get_default = 0x4001
 	cups_list_all_printers = 0x4002
 
 def respond(req):
 	if req.opid_or_status == OperationEnum.get_printer_attributes:
-		logging.warn('TODO implement get printer attributes')
-		return operation_not_implemented_response(req)
+		return operation_printer_list_response(req)
 	elif req.opid_or_status == OperationEnum.cups_list_all_printers:
+		return operation_printer_list_response(req)
+	elif req.opid_or_status == OperationEnum.cups_get_default:
 		return operation_printer_list_response(req)
 	else:
 		logging.info('Operation not supported 0x%04x', req.opid_or_status)

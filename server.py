@@ -18,18 +18,31 @@ from . import logic
 class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 	def handle(self):
 		try:
-			http.read_http(self.rfile)
-			req = request.IppRequest.from_file(self.rfile)
-			logging.debug('Got request %r', req)
-			resp = logic.respond(req)
+			method, path = http.read_http(self.rfile)
+			logging.debug('method=%r path=%r', method, path)
+			if method == 'POST':
+				resp = self.handle_ipp()
+				http.write_http(self.wfile)
+				resp.to_file(self.wfile)
+			elif method == 'GET' and path == '/':
+				http.write_http_hello(self.wfile)
+			elif method == 'GET' and path.endswith('.ppd'):
+				http.write_http_ppd(self.wfile)
+			elif method == 'GET':
+				http.write_http_missing(self.wfile)
+			else:
+				raise Exception('Not supported %r %r' % (method, path))
 		except Exception:
 			logging.exception('Failed to parse')
 			http.write_http_error(self.wfile)
-		else:
-			logging.debug('Using response %r', resp)
-			http.write_http(self.wfile)
-			resp.to_file(self.wfile)
 		self.wfile.flush()
+
+	def handle_ipp(self):
+		req = request.IppRequest.from_file(self.rfile)
+		logging.debug('Got request %r', req)
+		resp = logic.respond(req)
+		logging.debug('Using response %r', resp)
+		return resp
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 	allow_reuse_address = True
