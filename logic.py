@@ -19,6 +19,7 @@ class StatusCodeEnum(object):
 
 
 class OperationEnum(object):
+	validate_job = 0x0004
 	get_printer_attributes = 0x000b
 
 	# 0x4000 - 0xFFFF is for extensions
@@ -33,6 +34,8 @@ def respond(req):
 		return operation_printer_list_response(req)
 	elif req.opid_or_status == OperationEnum.cups_get_default:
 		return operation_printer_list_response(req)
+	elif req.opid_or_status == OperationEnum.validate_job:
+		return operation_validate_job_response(req)
 	else:
 		logging.info('Operation not supported 0x%04x', req.opid_or_status)
 		return operation_not_implemented_response(req)
@@ -49,6 +52,15 @@ def operation_not_implemented_response(req):
 
 def operation_printer_list_response(req):
 	attributes = printer_list_attributes()
+	return IppRequest(
+		VERSION,
+		StatusCodeEnum.ok,
+		req.request_id,
+		attributes)
+
+def operation_validate_job_response(req):
+	# TODO this just pretends it's ok!
+	attributes = minimal_attributes()
 	return IppRequest(
 		VERSION,
 		StatusCodeEnum.ok,
@@ -80,6 +92,9 @@ def printer_list_attributes():
 			parsers.Enum(x).bytes()
 			for x in (
 				0x0002, # print-job
+				0x0004, # validate-job (required by cups)
+				0x0008, # cancel-job (required by cups)
+				0x0009, # get-job-attributes (required by cups)
 				0x000b, # get-printer-attributes
 			)],
 		(SectionEnum.printer, b'multiple-document-jobs-supported', TagEnum.boolean) : [parsers.Boolean(False).bytes()],

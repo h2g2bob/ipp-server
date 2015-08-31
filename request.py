@@ -64,7 +64,7 @@ class IppRequest(object):
 		return cmp(type(self), type(other)) or cmp(self._attributes, other._attributes)
 
 	def __repr__(self):
-		return 'IppRequest(%r 0x%04x 0x%02x %r)' % (
+		return 'IppRequest(%r, 0x%04x, 0x%02x, %r)' % (
 			self.version,
 			self.opid_or_status,
 			self.request_id,
