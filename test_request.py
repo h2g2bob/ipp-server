@@ -3,10 +3,13 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from .http import read_http
+from .logic import OperationEnum
 from .request import IppRequest, TagEnum, SectionEnum
 
-import unittest
+from StringIO import StringIO
 import logging
+import unittest
 
 class TestIppRequest(unittest.TestCase):
 	printer_discovery_http_prefix = b'POST / HTTP/1.1\r\nContent-Length: 635\r\nContent-Type: application/ipp\r\nHost: localhost\r\nUser-Agent: CUPS/1.5.3\r\nExpect: 100-continue\r\n\r\n'
@@ -66,6 +69,14 @@ class TestIppRequest(unittest.TestCase):
 			(SectionEnum.operation, b'requesting-user-name', TagEnum.name_without_language): [
 				b'user']})
 
+
+class TestPrintTestPage(unittest.TestCase):
+	def test_strange_request(self):
+		data = 'POST /printers/ipp-printer.py HTTP/1.1\r\nContent-Type: application/ipp\r\nHost: localhost:1234\r\nTransfer-Encoding: chunked\r\nUser-Agent: CUPS/1.7.5 (Linux 3.16.0-4-amd64; x86_64) IPP/2.0\r\nExpect: 100-continue\r\n\r\nbf\r\n\x02\x00\x00\x02\x00\x00\x00\x04\x01G\x00\x12attributes-charset\x00\x05utf-8H\x00\x1battributes-natural-language\x00\x05en-gbE\x00\x0bprinter-uri\x00,ipp://localhost:1234/printers/ipp-printer.pyB\x00\x14requesting-user-name\x00\x04userB\x00\x08job-name\x00\x0e12 - Test page\x03\r\n'
+		rfile = StringIO(data)
+		read_http(rfile)
+		req = IppRequest.from_file(rfile)
+		self.assertEqual(req.opid_or_status, OperationEnum.print_job)
 
 if __name__=='__main__':
 	logging.getLogger().setLevel(logging.DEBUG)

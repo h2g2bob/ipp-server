@@ -19,13 +19,17 @@ class StatusCodeEnum(object):
 
 
 class OperationEnum(object):
+	# https://tools.ietf.org/html/rfc2911#section-4.4.15
+	print_job = 0x0002
 	validate_job = 0x0004
 	get_printer_attributes = 0x000b
 
 	# 0x4000 - 0xFFFF is for extensions
-	# CUPS extensions listed here: http://uw714doc.sco.com/en/cups/ipp.html
+	# CUPS extensions listed here:
+	# https://web.archive.org/web/20061024184939/http://uw714doc.sco.com/en/cups/ipp.html
 	cups_get_default = 0x4001
 	cups_list_all_printers = 0x4002
+
 
 def respond(req):
 	if req.opid_or_status == OperationEnum.get_printer_attributes:
@@ -37,7 +41,7 @@ def respond(req):
 	elif req.opid_or_status == OperationEnum.validate_job:
 		return operation_validate_job_response(req)
 	else:
-		logging.info('Operation not supported 0x%04x', req.opid_or_status)
+		logging.warn('Operation not supported 0x%04x', req.opid_or_status)
 		return operation_not_implemented_response(req)
 
 
