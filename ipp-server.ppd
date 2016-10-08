@@ -1,0 +1,33 @@
+*PPD-Adobe: "4.3"
+
+*% This is a minimal config file
+*% and is almost certainly missing lots of features
+
+*%     ___________
+*%    |           |
+*%    | PPD File. |
+*%    |           |
+*%  (============(@|
+*%  |            | |
+*%  | [        ] | |
+*%  |____________|/
+*% 
+
+*LanguageLevel: "2"
+*ColorDevice: True
+*FileSystem: False
+*Throughput: "1"
+
+
+*LanguageEncoding: ISOLatin1
+*LanguageVersion: English
+*PCFileName: "ipp-server-filename.ppd"
+*Product: "ipp-server-product"
+*Manufacturer:  "ipp-server-manufacturer"
+*ModelName: "ipp-server-modelname"
+
+*ColorDevice: True
+*DefaultColorSpace: CMYK
+*Throughput: "1"
+*Password: "0"
+

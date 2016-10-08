@@ -4,6 +4,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import re
+import os
+import os.path
 
 def read_http(f):
 	first_line = f.readline()
@@ -30,12 +32,8 @@ def write_http_hello(f):
 	write_http_page(f, 200, b'text/plain', b'This is h2g2bob\'s ipp-server.py')
 
 def write_http_ppd(f):
-	# LanguageLevel 2 here is certainly a lie
-	write_http_page(f, 200, b'text/plain', b'''*% This is a minimal config file
-*LanguageLevel: "2"
-*ColorDevice: True
-*FileSystem: False
-*Throughput: "1"''')
+	with open(local_file_location('ipp-server.ppd'), 'r') as ipp_file:
+		write_http_page(f, 200, b'text/plain', ipp_file.read())
 
 def write_http_missing(f):
 	write_http_page(f, 404, b'text/plain', b'Page does not exist')
@@ -50,3 +48,6 @@ def write_http_page(f, code, content, body):
 		b'',
 		body,
 		b'')))
+
+def local_file_location(filename):
+	return os.path.join(os.path.dirname(__file__), filename)
