@@ -13,6 +13,8 @@ from . import parsers
 
 VERSION=(1, 1)
 
+PRINTER_URI=b'ipp://localhost:1234/printer'
+
 class StatusCodeEnum(object):
 	ok = 0x0000
 	server_error_internal_error = 0x0500
@@ -51,6 +53,7 @@ def respond(req):
 		OperationEnum.cups_get_default: operation_printer_list_response,
 		OperationEnum.validate_job: operation_validate_job_response,
 		OperationEnum.get_jobs: operation_get_jobs_response,
+		OperationEnum.get_job_attrbutes: operation_get_job_attributes_response,
 		OperationEnum.print_job: operation_print_job_response,
 		0x0d0a: operation_misidentified_as_http,
 	}
@@ -61,6 +64,7 @@ def respond(req):
 		logging.warn('Operation not supported 0x%04x', req.opid_or_status)
 		command_function = operation_not_implemented_response
 
+	logging.info('IPP %r -> %r', req.opid_or_status, command_function)
 	return command_function(req)
 
 
@@ -102,17 +106,20 @@ def operation_get_jobs_response(req):
 		attributes)
 
 def operation_print_job_response(req):
-	attributes = minimal_attributes()
 	job_id = random.randint(1,9999)
-	job_uri = b'ipp://localhost:1234/job/%s' % (job_id,)
-	attributes[(SectionEnum.operation, b'job-uri', TagEnum.uri)] = [job_uri]
-	attributes[(SectionEnum.operation, b'job-id', TagEnum.integer)] = [parsers.Integer(int(job_id)).bytes()]
+	attributes = print_job_attributes(job_id)
+	return IppRequest(
+		VERSION,
+		StatusCodeEnum.ok,
+		req.request_id,
+		attributes)
 
-	# From https://tools.ietf.org/html/rfc2911#section-4.3.7
-	attributes[(SectionEnum.operation, b'job-state', TagEnum.enum)] = [parsers.Enum(JobStateEnum.pending).bytes()]
+def operation_get_job_attributes_response(req):
+	# Should have all these attributes:
+	# https://tools.ietf.org/html/rfc2911#section-4.3
 
-	# From https://tools.ietf.org/html/rfc2911#section-4.3.8
-	attributes[(SectionEnum.operation, b'job-state-reasons', TagEnum.keyword)] = [b'none']
+	job_id = parsers.Integer.from_bytes(req.only(SectionEnum.operation, 'job-id', TagEnum.integer)).integer
+	attributes = print_job_attributes(job_id)
 	return IppRequest(
 		VERSION,
 		StatusCodeEnum.ok,
@@ -134,7 +141,7 @@ def minimal_attributes():
 def printer_list_attributes():
 	attr = {
 		# rfc2911 section 4.4
-		(SectionEnum.printer, b'printer-uri-supported', TagEnum.uri) : [b'ipp://localhost:9000/printer'], # XXX
+		(SectionEnum.printer, b'printer-uri-supported', TagEnum.uri) : [PRINTER_URI],
 		(SectionEnum.printer, b'uri-authentication-supported', TagEnum.keyword) : [b'none'],
 		(SectionEnum.printer, b'uri-security-supported', TagEnum.keyword) : [b'none'],
 		(SectionEnum.printer, b'printer-name', TagEnum.name_without_language) : [b'ipp-printer.py'],
@@ -162,8 +169,41 @@ def printer_list_attributes():
 		(SectionEnum.printer, b'printer-is-accepting-jobs', TagEnum.boolean) : [parsers.Boolean(True).bytes()],
 		(SectionEnum.printer, b'queued-job-count', TagEnum.integer) : [parsers.Integer(0).bytes()],
 		(SectionEnum.printer, b'pdl-override-supported', TagEnum.keyword) : [b'not-attempted'],
-		(SectionEnum.printer, b'printer-up-time', TagEnum.integer) : [parsers.Integer(int(time.time())).bytes()],
+		(SectionEnum.printer, b'printer-up-time', TagEnum.integer) : [parsers.Integer(printer_uptime()).bytes()],
 		(SectionEnum.printer, b'compression-supported', TagEnum.keyword) : [b'none'],
 	}
 	attr.update(minimal_attributes())
 	return attr
+
+def print_job_attributes(job_id):
+	job_uri = b'ipp://localhost:1234/job/%s' % (job_id,)
+
+	# rfc2911 section 4.3.8
+	# state, state_reasons = JobStateEnum.aborted, [b'job-canceled-at-device']
+	# state, state_reasons = JobStateEnum.completed, [b'none']
+	state, state_reasons = JobStateEnum.pending, [b'job-incoming', b'job-data-insufficient']
+
+	attr = {
+		# Required for print-job:
+
+		(SectionEnum.operation, b'job-uri', TagEnum.uri): [job_uri],
+		(SectionEnum.operation, b'job-id', TagEnum.integer): [parsers.Integer(int(job_id)).bytes()],
+		(SectionEnum.operation, b'job-state', TagEnum.enum): [parsers.Enum(state).bytes()],
+		(SectionEnum.operation, b'job-state-reasons', TagEnum.keyword): state_reasons,
+
+		# Required for get-job-attributes:
+
+		(SectionEnum.operation, b'job-printer-uri', TagEnum.uri): [PRINTER_URI],
+		(SectionEnum.operation, b'job-name', TagEnum.name_without_language) : [b'Print job %s' % (job_id,)],
+		(SectionEnum.operation, b'job-originating-user-name', TagEnum.name_without_language) : [b'job-originating-user-name'],
+		(SectionEnum.operation, b'time-at-creation', TagEnum.integer) : [parsers.Integer(int(0)).bytes()],
+		(SectionEnum.operation, b'time-at-processing', TagEnum.integer) : [parsers.Integer(int(0)).bytes()],
+		(SectionEnum.operation, b'time-at-completed', TagEnum.integer) : [parsers.Integer(int(0)).bytes()],
+		(SectionEnum.operation, b'job-printer-up-time', TagEnum.integer) : [parsers.Integer(printer_uptime()).bytes()],
+
+	}
+	attr.update(minimal_attributes())
+	return attr
+
+def printer_uptime():
+	return int(time.time())
