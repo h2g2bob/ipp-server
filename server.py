@@ -23,7 +23,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 			logging.debug('method=%r path=%r', httpfile.method, httpfile.path)
 			if httpfile.method == 'POST':
 				resp = self.handle_ipp(httpfile)
-				http.write_http(self.wfile)
+				http.write_http(self.wfile, content_type='application/ipp')
 				resp.to_file(self.wfile)
 			elif httpfile.method == 'GET' and httpfile.path == '/':
 				http.write_http_hello(self.wfile)
