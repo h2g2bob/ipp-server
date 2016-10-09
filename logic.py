@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import logging
+import random
 import time
 
 from .request import IppRequest
@@ -22,6 +23,8 @@ class OperationEnum(object):
 	# https://tools.ietf.org/html/rfc2911#section-4.4.15
 	print_job = 0x0002
 	validate_job = 0x0004
+	cancel_job = 0x0008
+	get_job_attrbutes = 0x0009
 	get_jobs = 0x000a
 	get_printer_attributes = 0x000b
 
@@ -31,6 +34,15 @@ class OperationEnum(object):
 	cups_get_default = 0x4001
 	cups_list_all_printers = 0x4002
 
+class JobStateEnum(object):
+	# https://tools.ietf.org/html/rfc2911#section-4.3.7
+	pending = 3
+	pending_held = 4
+	processing = 5
+	processing_stopped = 6
+	canceled = 7
+	aborted = 8
+	completed = 9
 
 def respond(req):
 	commands = {
@@ -39,6 +51,7 @@ def respond(req):
 		OperationEnum.cups_get_default: operation_printer_list_response,
 		OperationEnum.validate_job: operation_validate_job_response,
 		OperationEnum.get_jobs: operation_get_jobs_response,
+		OperationEnum.print_job: operation_print_job_response,
 		0x0d0a: operation_misidentified_as_http,
 	}
 
@@ -88,6 +101,24 @@ def operation_get_jobs_response(req):
 		req.request_id,
 		attributes)
 
+def operation_print_job_response(req):
+	attributes = minimal_attributes()
+	job_id = random.randint(1,9999)
+	job_uri = b'ipp://localhost:1234/job/%s' % (job_id,)
+	attributes[(SectionEnum.operation, b'job-uri', TagEnum.uri)] = [job_uri]
+	attributes[(SectionEnum.operation, b'job-id', TagEnum.integer)] = [parsers.Integer(int(job_id)).bytes()]
+
+	# From https://tools.ietf.org/html/rfc2911#section-4.3.7
+	attributes[(SectionEnum.operation, b'job-state', TagEnum.enum)] = [parsers.Enum(JobStateEnum.pending).bytes()]
+
+	# From https://tools.ietf.org/html/rfc2911#section-4.3.8
+	attributes[(SectionEnum.operation, b'job-state-reasons', TagEnum.keyword)] = [b'none']
+	return IppRequest(
+		VERSION,
+		StatusCodeEnum.ok,
+		req.request_id,
+		attributes)
+
 def operation_misidentified_as_http(req):
 	raise Exception("The opid for this operation is \\r\\n, which suggests the request was actually a http request.")
 
@@ -115,11 +146,11 @@ def printer_list_attributes():
 		(SectionEnum.printer, b'operations-supported', TagEnum.enum) : [
 			parsers.Enum(x).bytes()
 			for x in (
-				0x0002, # print-job
-				0x0004, # validate-job (required by cups)
-				0x0008, # cancel-job (required by cups)
-				0x0009, # get-job-attributes (required by cups)
-				0x000b, # get-printer-attributes
+				OperationEnum.print_job,  # (required by cups)
+				OperationEnum.validate_job,  # (required by cups)
+				OperationEnum.cancel_job,  # (required by cups)
+				OperationEnum.get_job_attrbutes,  # (required by cups)
+				OperationEnum.get_printer_attributes,
 			)],
 		(SectionEnum.printer, b'multiple-document-jobs-supported', TagEnum.boolean) : [parsers.Boolean(False).bytes()],
 		(SectionEnum.printer, b'charset-configured', TagEnum.charset) : [b'utf-8'],
