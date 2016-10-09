@@ -14,31 +14,32 @@ import argparse
 from . import http
 from . import request
 from . import logic
+from .http_reader import HttpRequest
 
 class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 	def handle(self):
 		try:
-			method, path = http.read_http(self.rfile)
-			logging.debug('method=%r path=%r', method, path)
-			if method == 'POST':
-				resp = self.handle_ipp()
+			httpfile = HttpRequest(self.rfile)
+			logging.debug('method=%r path=%r', httpfile.method, httpfile.path)
+			if httpfile.method == 'POST':
+				resp = self.handle_ipp(httpfile)
 				http.write_http(self.wfile)
 				resp.to_file(self.wfile)
-			elif method == 'GET' and path == '/':
+			elif httpfile.method == 'GET' and httpfile.path == '/':
 				http.write_http_hello(self.wfile)
-			elif method == 'GET' and path.endswith('.ppd'):
+			elif httpfile.method == 'GET' and httpfile.path.endswith('.ppd'):
 				http.write_http_ppd(self.wfile)
-			elif method == 'GET':
+			elif httpfile.method == 'GET':
 				http.write_http_missing(self.wfile)
 			else:
-				raise Exception('Not supported %r %r' % (method, path))
+				raise Exception('Not supported %r %r' % (httpfile.method, httpfile.path))
 		except Exception:
 			logging.exception('Failed to parse')
 			http.write_http_error(self.wfile)
 		self.wfile.flush()
 
-	def handle_ipp(self):
-		req = request.IppRequest.from_file(self.rfile)
+	def handle_ipp(self, httpfile):
+		req = request.IppRequest.from_file(httpfile)
 		logging.debug('Got request %r', req)
 		resp = logic.respond(req)
 		logging.debug('Using response %r', resp)

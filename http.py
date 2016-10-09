@@ -7,17 +7,6 @@ import re
 import os
 import os.path
 
-def read_http(f):
-	first_line = f.readline()
-	m = re.compile(r'^(GET|POST) (/[^ ]*) HTTP/').search(first_line)
-	if m is None:
-		raise ValueError('Invalid request: %r' % (first_line,))
-	while True:
-		line = f.readline()
-		if line.rstrip(b'\r\n') == '':
-			break
-	return m.groups()
-
 def write_http(f):
 	f.write(b'\r\n'.join((
 		b'HTTP/1.1 200 OK',
