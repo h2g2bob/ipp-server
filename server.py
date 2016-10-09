@@ -63,7 +63,7 @@ def parse_args():
 	return parser.parse_args()
 
 def main(args):
-	logging.basicConfig(level=logging.DEBUG)
+	logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
 	server = ThreadedTCPServer((args.host, args.port), ThreadedTCPRequestHandler)
 	logging.debug('Listening on %r', server.server_address)
