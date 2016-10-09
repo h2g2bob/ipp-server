@@ -22,6 +22,7 @@ class OperationEnum(object):
 	# https://tools.ietf.org/html/rfc2911#section-4.4.15
 	print_job = 0x0002
 	validate_job = 0x0004
+	get_jobs = 0x000a
 	get_printer_attributes = 0x000b
 
 	# 0x4000 - 0xFFFF is for extensions
@@ -32,17 +33,22 @@ class OperationEnum(object):
 
 
 def respond(req):
-	if req.opid_or_status == OperationEnum.get_printer_attributes:
-		return operation_printer_list_response(req)
-	elif req.opid_or_status == OperationEnum.cups_list_all_printers:
-		return operation_printer_list_response(req)
-	elif req.opid_or_status == OperationEnum.cups_get_default:
-		return operation_printer_list_response(req)
-	elif req.opid_or_status == OperationEnum.validate_job:
-		return operation_validate_job_response(req)
-	else:
+	commands = {
+		OperationEnum.get_printer_attributes: operation_printer_list_response,
+		OperationEnum.cups_list_all_printers: operation_printer_list_response,
+		OperationEnum.cups_get_default: operation_printer_list_response,
+		OperationEnum.validate_job: operation_validate_job_response,
+		OperationEnum.get_jobs: operation_get_jobs_response,
+		0x0d0a: operation_misidentified_as_http,
+	}
+
+	try:
+		command_function = commands[req.opid_or_status]
+	except KeyError:
 		logging.warn('Operation not supported 0x%04x', req.opid_or_status)
-		return operation_not_implemented_response(req)
+		command_function = operation_not_implemented_response
+
+	return command_function(req)
 
 
 def operation_not_implemented_response(req):
@@ -70,6 +76,20 @@ def operation_validate_job_response(req):
 		StatusCodeEnum.ok,
 		req.request_id,
 		attributes)
+
+def operation_get_jobs_response(req):
+	# an empty list of jobs, which probably breaks the rfc
+	# if the client asked for completed jobs
+	# https://tools.ietf.org/html/rfc2911#section-3.2.6.2
+	attributes = minimal_attributes()
+	return IppRequest(
+		VERSION,
+		StatusCodeEnum.ok,
+		req.request_id,
+		attributes)
+
+def operation_misidentified_as_http(req):
+	raise Exception("The opid for this operation is \\r\\n, which suggests the request was actually a http request.")
 
 def minimal_attributes():
 	return {
