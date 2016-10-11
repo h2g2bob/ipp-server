@@ -14,7 +14,7 @@ import argparse
 from . import http
 from . import request
 from . import logic
-from .logic import OperationEnum
+from .logic import OperationEnum, get_job_id
 from .http_reader import HttpRequest
 
 class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
@@ -30,11 +30,11 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 					status='100 Continue' if http_continue else '200 OK')
 				resp.to_file(self.wfile)
 				if http_continue:
-					while True:
-						x = "".join(self.rfile.read(1) for _ in xrange(100))
-						if not x:
-							break
-						logging.info('Data %r', x)
+					data = httpfile.read(None)
+					filename = '/tmp/ipp-server-print-job-%d.ps' % (get_job_id(resp),)
+					with open(filename, 'wb') as diskfile:
+						diskfile.write(data)
+					logging.info('Data written to %r', filename)
 			elif httpfile.method == 'GET' and httpfile.path == '/':
 				http.write_http_hello(self.wfile)
 			elif httpfile.method == 'GET' and httpfile.path.endswith('.ppd'):

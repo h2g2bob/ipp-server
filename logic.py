@@ -118,7 +118,7 @@ def operation_get_job_attributes_response(req):
 	# Should have all these attributes:
 	# https://tools.ietf.org/html/rfc2911#section-4.3
 
-	job_id = parsers.Integer.from_bytes(req.only(SectionEnum.operation, 'job-id', TagEnum.integer)).integer
+	job_id = get_job_id(req)
 	attributes = print_job_attributes(job_id, new_job=False)
 	return IppRequest(
 		VERSION,
@@ -128,6 +128,9 @@ def operation_get_job_attributes_response(req):
 
 def operation_misidentified_as_http(req):
 	raise Exception("The opid for this operation is \\r\\n, which suggests the request was actually a http request.")
+
+def get_job_id(req):
+	return parsers.Integer.from_bytes(req.only(SectionEnum.operation, 'job-id', TagEnum.integer)).integer
 
 def minimal_attributes():
 	return {

@@ -21,12 +21,20 @@ class DeChunk(AbstractFile):
 		self._buffer = ''
 
 	def read(self, size):
-		while len(self._buffer) < size:
+		# XXX this is super-inefficient for large sizes!
+		while size is None or len(self._buffer) < size:
 			chunk_size_s = self._f.readline()
+			logging.debug('chunksz=%r', chunk_size_s)
 			if not chunk_size_s:
+				logging.warn('Socket closed in the middle of a chunked request')
 				break
+			if chunk_size_s.strip() == '':
+				continue
 			chunk_size = int(chunk_size_s, 16)
+			if chunk_size == 0:
+				break
 			chunk = self._f.read(chunk_size)
+			logging.debug('chunk=%r', chunk)
 			self._buffer += chunk
 		rtn, self._buffer = self._buffer[:size], self._buffer[size:]
 		return rtn
