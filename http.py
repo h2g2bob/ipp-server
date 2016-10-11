@@ -7,9 +7,9 @@ import re
 import os
 import os.path
 
-def write_http(f, content_type='text/plain'):
+def write_http(f, content_type='text/plain', status='200 OK'):
 	f.write(b'\r\n'.join((
-		b'HTTP/1.1 200 OK',
+		b'HTTP/1.1 ' + status,
 		b'Server: ipp-server',
 		b'Content-Type: ' + content_type,
 		b'',

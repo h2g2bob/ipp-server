@@ -14,6 +14,7 @@ import argparse
 from . import http
 from . import request
 from . import logic
+from .logic import OperationEnum
 from .http_reader import HttpRequest
 
 class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
@@ -22,9 +23,18 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 			httpfile = HttpRequest(self.rfile)
 			logging.debug('method=%r path=%r', httpfile.method, httpfile.path)
 			if httpfile.method == 'POST':
-				resp = self.handle_ipp(httpfile)
-				http.write_http(self.wfile, content_type='application/ipp')
+				http_continue, resp = self.handle_ipp(httpfile)
+				http.write_http(
+					self.wfile,
+					content_type='application/ipp',
+					status='100 Continue' if http_continue else '200 OK')
 				resp.to_file(self.wfile)
+				if http_continue:
+					while True:
+						x = "".join(self.rfile.read(1) for _ in xrange(100))
+						if not x:
+							break
+						logging.info('Data %r', x)
 			elif httpfile.method == 'GET' and httpfile.path == '/':
 				http.write_http_hello(self.wfile)
 			elif httpfile.method == 'GET' and httpfile.path.endswith('.ppd'):
@@ -40,10 +50,11 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 
 	def handle_ipp(self, httpfile):
 		req = request.IppRequest.from_file(httpfile)
+		http_continue = req.opid_or_status == OperationEnum.print_job
 		logging.debug('Got request %r', req)
 		resp = logic.respond(req)
 		logging.debug('Using response %r', resp)
-		return resp
+		return http_continue, resp
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 	allow_reuse_address = True

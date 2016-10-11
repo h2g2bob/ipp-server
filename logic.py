@@ -107,7 +107,7 @@ def operation_get_jobs_response(req):
 
 def operation_print_job_response(req):
 	job_id = random.randint(1,9999)
-	attributes = print_job_attributes(job_id)
+	attributes = print_job_attributes(job_id, new_job=True)
 	return IppRequest(
 		VERSION,
 		StatusCodeEnum.ok,
@@ -119,7 +119,7 @@ def operation_get_job_attributes_response(req):
 	# https://tools.ietf.org/html/rfc2911#section-4.3
 
 	job_id = parsers.Integer.from_bytes(req.only(SectionEnum.operation, 'job-id', TagEnum.integer)).integer
-	attributes = print_job_attributes(job_id)
+	attributes = print_job_attributes(job_id, new_job=False)
 	return IppRequest(
 		VERSION,
 		StatusCodeEnum.ok,
@@ -175,13 +175,16 @@ def printer_list_attributes():
 	attr.update(minimal_attributes())
 	return attr
 
-def print_job_attributes(job_id):
+def print_job_attributes(job_id, new_job):
 	job_uri = b'ipp://localhost:1234/job/%s' % (job_id,)
 
 	# rfc2911 section 4.3.8
 	# state, state_reasons = JobStateEnum.aborted, [b'job-canceled-at-device']
-	# state, state_reasons = JobStateEnum.completed, [b'none']
-	state, state_reasons = JobStateEnum.pending, [b'job-incoming', b'job-data-insufficient']
+
+	if new_job:
+		state, state_reasons = JobStateEnum.pending, [b'job-incoming', b'job-data-insufficient']
+	else:
+		state, state_reasons = JobStateEnum.completed, [b'none']
 
 	attr = {
 		# Required for print-job:
