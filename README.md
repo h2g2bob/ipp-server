@@ -21,10 +21,5 @@ Add the printer, specifying `ipp://localhost:1234/` as the printer's location.
 Does it work
 ------------
 
-It works well enough to print the test page on my Linux box with CUPS 1.7.5.
-
-It doesn't implement all of the IPP spec and takes some, er, short-cuts.
-
-There are currently some major omissions. Printing a one-page document works
-fine, but printing a document with multiple pages will cause cups to
-repeatedly ask for the job status.
+It doesn't implement all of the IPP spec, but it works well enough to print
+the pages on my Linux box with CUPS 1.7.5.
