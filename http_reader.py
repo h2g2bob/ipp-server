@@ -34,9 +34,12 @@ class DeChunk(AbstractFile):
 			if chunk_size == 0:
 				break
 			chunk = self._f.read(chunk_size)
-			logging.debug('chunk=%r', chunk)
+			logging.debug('chunk=0x%x', len(chunk))
 			self._buffer += chunk
-		rtn, self._buffer = self._buffer[:size], self._buffer[size:]
+		if size is None:
+			rtn, self._buffer = self._buffer, ''
+		else:
+			rtn, self._buffer = self._buffer[:size], self._buffer[size:]
 		return rtn
 
 

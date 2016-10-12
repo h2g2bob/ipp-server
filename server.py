@@ -28,13 +28,13 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 					self.wfile,
 					content_type='application/ipp',
 					status='100 Continue' if http_continue else '200 OK')
-				resp.to_file(self.wfile)
 				if http_continue:
 					data = httpfile.read(None)
 					filename = '/tmp/ipp-server-print-job-%d.ps' % (get_job_id(resp),)
 					with open(filename, 'wb') as diskfile:
 						diskfile.write(data)
 					logging.info('Data written to %r', filename)
+				resp.to_file(self.wfile)
 			elif httpfile.method == 'GET' and httpfile.path == '/':
 				http.write_http_hello(self.wfile)
 			elif httpfile.method == 'GET' and httpfile.path.endswith('.ppd'):
