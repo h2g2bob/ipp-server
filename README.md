@@ -18,19 +18,19 @@ Usage
 
 Start running, saving postscript doucments to a directory:
 ```
-python -m ipp-server.server --port 1234 save /tmp/
+python -m ippserver.server --port 1234 save /tmp/
 ```
 
 Add the printer, specifying `ipp://localhost:1234/` as the printer's location.
 
 Instead of saving the doucments, you can send them to a command. For example, send it to [hexdump(1)]:
 ```
-python -m ipp-server.server --port 1234 run hexdump
+python -m ippserver.server --port 1234 run hexdump
 ```
 
 Or email yourself using [mail(1)]:
 ```
-python -m ipp-server.server --port 1234 run \
+python -m ippserver.server --port 1234 run \
 	mail -E \
 	-a "MIME-Version 1.0" -a "Content-Type: application/postscript" \
 	-s 'A printed document' some.person@example.com
