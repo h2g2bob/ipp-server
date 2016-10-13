@@ -29,7 +29,7 @@ def parse_args():
 
 def action_function_from_args(args):
 	if args.action == 'save':
-		return actions.save_to_directory(directory=args.save)
+		return actions.save_to_directory(directory=args.directory)
 	if args.action == 'run':
 		return actions.run_command(command=args.command)
 	raise RuntimeError(args)
