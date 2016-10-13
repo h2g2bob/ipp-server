@@ -11,6 +11,7 @@ import sys
 import logging
 import argparse
 
+from . import actions
 from . import http
 from . import request
 from . import logic
@@ -29,11 +30,9 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 					content_type='application/ipp',
 					status='100 Continue' if http_continue else '200 OK')
 				if http_continue:
+					job_id = get_job_id(resp)
 					data = httpfile.read(None)
-					filename = '/tmp/ipp-server-print-job-%d.ps' % (get_job_id(resp),)
-					with open(filename, 'wb') as diskfile:
-						diskfile.write(data)
-					logging.info('Data written to %r', filename)
+					self.server.action_function(job_id, data)
 				resp.to_file(self.wfile)
 			elif httpfile.method == 'GET' and httpfile.path == '/':
 				http.write_http_hello(self.wfile)
@@ -58,6 +57,9 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 	allow_reuse_address = True
+	def __init__(self, address, request_handler, action_function):
+		self.action_function = action_function
+		SocketServer.TCPServer.__init__(self, address, request_handler)  # old style class!
 
 def wait_until_ctrl_c():
 	try:
@@ -70,14 +72,27 @@ def parse_args():
 	parser = argparse.ArgumentParser(description='An IPP server')
 	parser.add_argument('-v', '--verbose', action='count', help='Add debugging')
 	parser.add_argument('--host', type=str, default='localhost', metavar='HOST', help='Address to listen on')
-	parser.add_argument('port', type=int, metavar='PORT', help='Port to listen on')
+	parser.add_argument('--port', type=int, required=True, metavar='PORT', help='Port to listen on')
+	group = parser.add_mutually_exclusive_group(required=True)
+	group.add_argument('--save', metavar='DIRECTORY', help='Save files to a directory')
+	group.add_argument('--command', nargs='+', metavar='COMMAND', help='Command to run')
 	return parser.parse_args()
+
+def action_function_from_args(args):
+	if args.save:
+		return actions.save_to_directory(directory=args.save)
+	if args.command:
+		return actions.run_command(command=args.command)
+	raise RuntimeError(args)
 
 def main(args):
 	logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
-	server = ThreadedTCPServer((args.host, args.port), ThreadedTCPRequestHandler)
-	logging.debug('Listening on %r', server.server_address)
+	server = ThreadedTCPServer(
+		(args.host, args.port),
+		ThreadedTCPRequestHandler,
+		action_function_from_args(args))
+	logging.info('Listening on %r', server.server_address)
 
 	server_thread = threading.Thread(target=server.serve_forever)
 	server_thread.daemon = True
