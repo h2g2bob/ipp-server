@@ -73,15 +73,21 @@ def parse_args():
 	parser.add_argument('-v', '--verbose', action='count', help='Add debugging')
 	parser.add_argument('--host', type=str, default='localhost', metavar='HOST', help='Address to listen on')
 	parser.add_argument('--port', type=int, required=True, metavar='PORT', help='Port to listen on')
-	group = parser.add_mutually_exclusive_group(required=True)
-	group.add_argument('--save', metavar='DIRECTORY', help='Save files to a directory')
-	group.add_argument('--command', nargs='+', metavar='COMMAND', help='Command to run')
+
+	parser_action = parser.add_subparsers(help='Actions', dest='action')
+
+	parser_save = parser_action.add_parser('save', help='Write any print jobs to disk')
+	parser_save.add_argument('directory', metavar='DIRECTORY', help='Directory to save files into')
+
+	parser_command = parser_action.add_parser('run', help='Run a command when recieving a print job')
+	parser_command.add_argument('command', nargs=argparse.REMAINDER, metavar='COMMAND', help='Command to run')
+
 	return parser.parse_args()
 
 def action_function_from_args(args):
-	if args.save:
+	if args.action == 'save':
 		return actions.save_to_directory(directory=args.save)
-	if args.command:
+	if args.action == 'run':
 		return actions.run_command(command=args.command)
 	raise RuntimeError(args)
 
