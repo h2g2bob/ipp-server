@@ -10,25 +10,36 @@ Does it work
 
 Yes, it works well enough to print documents on my Linux box with CUPS 1.7.5.
 
-It doesn't implement the entire IPP spec: ymmv.
+It doesn't implement the entire IPP specification, so I make no guarantee.
 
 
-Usage
------
+Add ipp-server as a printer
+---------------------------
 
-Start running, saving postscript doucments to a directory:
+Start running the server:
 ```
 python -m ippserver --port 1234 save /tmp/
 ```
 
-Add the printer, specifying `ipp://localhost:1234/` as the printer's location.
+The server listens to `localhost` by default. The well-known port of 631 is likely to already be in use by the web interface of CUPS, so I'm using port 1234 for this example.
 
-Instead of saving the doucments, you can send them to a command. For example, send it to [hexdump(1)]:
+Next, add the printer as you would normally on your computer (ie: the Gnome or KDE add printer dialogs). The printer location is `ipp://localhost:1234/`.
+
+
+Doing things with print jobs
+----------------------------
+
+You can save print jobs as randomly named `.ps` files in a given directory:
+```
+python -m ippserver --port 1234 save /tmp/
+```
+
+Alternatively, you can send the postscript files to a command. The following command will run [hexdump(1)] for every print job received. hexdump reads the .ps file from stdin.
 ```
 python -m ippserver --port 1234 run hexdump
 ```
 
-Or email yourself using [mail(1)]:
+Or why not email print jobs to yourself using [mail(1)]:
 ```
 python -m ippserver --port 1234 run \
 	mail -E \
