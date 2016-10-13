@@ -7,10 +7,12 @@ import logging
 import os
 import os.path
 import subprocess
+import uuid
+
 
 def save_to_directory(directory):
 	def do_save_to_directory(job_id, data):
-		leaf = 'ipp-server-print-job-%d.ps' % (job_id,)
+		leaf = 'ipp-server-print-job-%d-%s.ps' % (job_id, uuid.uuid1(),)
 		filename = os.path.join(directory, leaf)
 		with open(filename, 'wb') as diskfile:
 			diskfile.write(data)
