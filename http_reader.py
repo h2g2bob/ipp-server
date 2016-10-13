@@ -18,7 +18,7 @@ class AbstractFile(object):
 class DeChunk(AbstractFile):
 	def __init__(self, f):
 		self._f = f
-		self._buffer = ''
+		self._buffer = b''
 
 	def read(self, size):
 		# XXX this is super-inefficient for large sizes!
@@ -28,7 +28,7 @@ class DeChunk(AbstractFile):
 			if not chunk_size_s:
 				logging.warn('Socket closed in the middle of a chunked request')
 				break
-			if chunk_size_s.strip() == '':
+			if chunk_size_s.strip() == b'':
 				continue
 			chunk_size = int(chunk_size_s, 16)
 			if chunk_size == 0:
@@ -37,7 +37,7 @@ class DeChunk(AbstractFile):
 			logging.debug('chunk=0x%x', len(chunk))
 			self._buffer += chunk
 		if size is None:
-			rtn, self._buffer = self._buffer, ''
+			rtn, self._buffer = self._buffer, b''
 		else:
 			rtn, self._buffer = self._buffer[:size], self._buffer[size:]
 		return rtn
@@ -47,7 +47,7 @@ class HttpRequest(AbstractFile):
 	def __init__(self, f):
 		self.method, self.path = self._process_status(f)
 		headers = self._process_headers(f)
-		if 'chunked' in headers.get('transfer-encoding', ''):
+		if b'chunked' in headers.get(b'transfer-encoding', b''):
 			f = DeChunk(f)
 		self._f = f
 
@@ -57,7 +57,7 @@ class HttpRequest(AbstractFile):
 	@staticmethod
 	def _process_status(f):
 		first_line = f.readline()
-		m = re.compile(r'^(GET|POST) (/[^ ]*) HTTP/').search(first_line)
+		m = re.compile(br'^(GET|POST) (/[^ ]*) HTTP/').search(first_line)
 		if m is None:
 			raise ValueError('Invalid request: %r' % (first_line,))
 		return m.groups()
@@ -67,10 +67,10 @@ class HttpRequest(AbstractFile):
 		headers = {}
 		while True:
 			line = f.readline()
-			if line.rstrip(b'\r\n') == '':
+			if line.rstrip(b'\r\n') == b'':
 				break
 			try:
-				key, value = line.split(':', 1)
+				key, value = line.split(b':', 1)
 				headers[key.lower().strip()] = value.strip()
 			except ValueError:
 				logging.warn('Invalid header %r', line)
