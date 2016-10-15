@@ -23,6 +23,12 @@ def local_file_location(filename):
 
 class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 	def handle(self):
+		try:
+			self._handle()
+		except Exception:
+			logging.exception('Error handling request')
+
+	def _handle(self):
 		http = HttpTransport(self.rfile, self.wfile)
 		http.recv_headers()
 
