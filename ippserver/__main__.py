@@ -7,7 +7,7 @@ import argparse
 import logging
 import sys
 
-from . import actions
+from . import behaviour
 from .server import run_server, ThreadedTCPServer, ThreadedTCPRequestHandler
 
 
@@ -27,11 +27,11 @@ def parse_args():
 
 	return parser.parse_args()
 
-def action_function_from_args(args):
+def behaviour_from_args(args):
 	if args.action == 'save':
-		return actions.save_to_directory(directory=args.directory)
+		return behaviour.SaveFilePrinter(directory=args.directory)
 	if args.action == 'run':
-		return actions.run_command(command=args.command)
+		return behaviour.RunCommandPrinter(command=args.command)
 	raise RuntimeError(args)
 
 def main(args):
@@ -40,7 +40,7 @@ def main(args):
 	server = ThreadedTCPServer(
 		(args.host, args.port),
 		ThreadedTCPRequestHandler,
-		action_function_from_args(args))
+		behaviour_from_args(args))
 	run_server(server)
 
 if __name__ == "__main__":

@@ -77,27 +77,14 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 			http.send_headers(status='200 OK', content_type='application/ipp')
 			postscript_file = None
 
-		ipp_response = self.do_action(ipp_request, postscript_file)
+		ipp_response = self.server.behaviour.handle_ipp(ipp_request, postscript_file)
 		http.send_body(StringIO(ipp_response.to_string())) # XXX inefficient
 
 
-	def do_action(self, ipp_request, postscript_file):
-		ipp_response = logic.respond(ipp_request)
-		if expect_page_data_follows(ipp_request):
-			blocks = []
-			while True:
-				block = postscript_file.read(1024)
-				if block == b'':
-					break
-				blocks.append(block)
-			self.server.action_function(b''.join(blocks))
-
-		return ipp_response
-
 class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
 	allow_reuse_address = True
-	def __init__(self, address, request_handler, action_function):
-		self.action_function = action_function
+	def __init__(self, address, request_handler, behaviour):
+		self.behaviour = behaviour
 		SocketServer.ThreadingTCPServer.__init__(self, address, request_handler)  # old style class!
 
 def wait_until_ctrl_c():
