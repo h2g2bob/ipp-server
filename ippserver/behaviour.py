@@ -5,19 +5,22 @@ from __future__ import unicode_literals
 
 import logging
 import os.path
-import subprocess
-import uuid
 import random
+import subprocess
+import time
+import uuid
 
-from .logic import get_job_id
-from .logic import OperationEnum
+from . import parsers
 from .logic import JobStateEnum
+from .logic import OperationEnum
 from .logic import StatusCodeEnum
-from .logic import minimal_attributes
-from .logic import printer_list_attributes
-from .logic import print_job_attributes
-from .logic import printer_uptime
 from .request import IppRequest
+from .request import SectionEnum, TagEnum
+
+
+def get_job_id(req):
+	return parsers.Integer.from_bytes(req.only(SectionEnum.operation, 'job-id', TagEnum.integer)).integer
+
 
 def read_in_blocks(postscript_file):
 	while True:
@@ -31,6 +34,8 @@ def read_in_blocks(postscript_file):
 class Behaviour(object):
 	"""Do anything in response to IPP requests"""
 	version=(1, 1)
+	base_uri=b'ipp://localhost:1234/'
+	printer_uri=b'ipp://localhost:1234/printer'
 
 	def expect_page_data_follows(self, ipp_request):
 		return ipp_request.opid_or_status == OperationEnum.print_job
@@ -53,7 +58,7 @@ class AllCommandsReturnNotImplemented(Behaviour):
 		return self.operation_not_implemented_response
 
 	def operation_not_implemented_response(self, req, _psfile):
-		attributes = minimal_attributes()
+		attributes = self.minimal_attributes()
 		return IppRequest(
 			self.version,
 			StatusCodeEnum.server_error_operation_not_supported,
@@ -88,7 +93,7 @@ class StatelessPrinter(Behaviour):
 
 
 	def operation_not_implemented_response(self, req, _psfile):
-		attributes = minimal_attributes()
+		attributes = self.minimal_attributes()
 		return IppRequest(
 			self.version,
 			# StatusCodeEnum.server_error_operation_not_supported,
@@ -97,7 +102,7 @@ class StatelessPrinter(Behaviour):
 			attributes)
 
 	def operation_printer_list_response(self, req, _psfile):
-		attributes = printer_list_attributes()
+		attributes = self.printer_list_attributes()
 		return IppRequest(
 			self.version,
 			StatusCodeEnum.ok,
@@ -106,7 +111,7 @@ class StatelessPrinter(Behaviour):
 
 	def operation_validate_job_response(self, req, _psfile):
 		# TODO this just pretends it's ok!
-		attributes = minimal_attributes()
+		attributes = self.minimal_attributes()
 		return IppRequest(
 			self.version,
 			StatusCodeEnum.ok,
@@ -117,7 +122,7 @@ class StatelessPrinter(Behaviour):
 		# an empty list of jobs, which probably breaks the rfc
 		# if the client asked for completed jobs
 		# https://tools.ietf.org/html/rfc2911#section-3.2.6.2
-		attributes = minimal_attributes()
+		attributes = self.minimal_attributes()
 		return IppRequest(
 			self.version,
 			StatusCodeEnum.ok,
@@ -126,7 +131,7 @@ class StatelessPrinter(Behaviour):
 
 	def operation_print_job_response(self, req, psfile):
 		job_id = self.create_job(req)
-		attributes = print_job_attributes(job_id, new_job=True)
+		attributes = self.print_job_attributes(job_id, new_job=True)
 		self.handle_postscript(req, psfile)
 		return IppRequest(
 			self.version,
@@ -139,7 +144,7 @@ class StatelessPrinter(Behaviour):
 		# https://tools.ietf.org/html/rfc2911#section-4.3
 
 		job_id = get_job_id(req)
-		attributes = print_job_attributes(job_id, new_job=False)
+		attributes = self.print_job_attributes(job_id, new_job=False)
 		return IppRequest(
 			self.version,
 			StatusCodeEnum.ok,
@@ -148,6 +153,88 @@ class StatelessPrinter(Behaviour):
 
 	def operation_misidentified_as_http(self, _req, _psfile):
 		raise Exception("The opid for this operation is \\r\\n, which suggests the request was actually a http request.")
+
+	def minimal_attributes(self):
+		return {
+			# This list comes from
+			# https://tools.ietf.org/html/rfc2911
+			# Section 3.1.4.2 Response Operation Attributes
+			(SectionEnum.operation, b'attributes-charset', TagEnum.charset) : [b'utf-8'],
+			(SectionEnum.operation, b'attributes-natural-language', TagEnum.natural_language) : [b'en'],
+		}
+
+	def printer_list_attributes(self):
+		attr = {
+			# rfc2911 section 4.4
+			(SectionEnum.printer, b'printer-uri-supported', TagEnum.uri) : [self.printer_uri],
+			(SectionEnum.printer, b'uri-authentication-supported', TagEnum.keyword) : [b'none'],
+			(SectionEnum.printer, b'uri-security-supported', TagEnum.keyword) : [b'none'],
+			(SectionEnum.printer, b'printer-name', TagEnum.name_without_language) : [b'ipp-printer.py'],
+			(SectionEnum.printer, b'printer-info', TagEnum.text_without_language) : [b'Printer using ipp-printer.py'],
+			(SectionEnum.printer, b'printer-make-and-model', TagEnum.text_without_language) : [b'h2g2bob\'s ipp-printer.py 0.00'],
+			(SectionEnum.printer, b'printer-state', TagEnum.enum) : [parsers.Enum(3).bytes()], # XXX 3 is idle
+			(SectionEnum.printer, b'printer-state-reasons', TagEnum.keyword) : [b'none'],
+			(SectionEnum.printer, b'ipp-versions-supported', TagEnum.keyword) : [b'1.1'],
+			(SectionEnum.printer, b'operations-supported', TagEnum.enum) : [
+				parsers.Enum(x).bytes()
+				for x in (
+					OperationEnum.print_job,  # (required by cups)
+					OperationEnum.validate_job,  # (required by cups)
+					OperationEnum.cancel_job,  # (required by cups)
+					OperationEnum.get_job_attrbutes,  # (required by cups)
+					OperationEnum.get_printer_attributes,
+				)],
+			(SectionEnum.printer, b'multiple-document-jobs-supported', TagEnum.boolean) : [parsers.Boolean(False).bytes()],
+			(SectionEnum.printer, b'charset-configured', TagEnum.charset) : [b'utf-8'],
+			(SectionEnum.printer, b'charset-supported', TagEnum.charset) : [b'utf-8'],
+			(SectionEnum.printer, b'natural-language-configured', TagEnum.natural_language) : [b'en'],
+			(SectionEnum.printer, b'generated-natural-language-supported', TagEnum.natural_language) : [b'en'],
+			(SectionEnum.printer, b'document-format-default', TagEnum.mime_media_type) : [b'application/pdf'],
+			(SectionEnum.printer, b'document-format-supported', TagEnum.mime_media_type) : [b'application/pdf'],
+			(SectionEnum.printer, b'printer-is-accepting-jobs', TagEnum.boolean) : [parsers.Boolean(True).bytes()],
+			(SectionEnum.printer, b'queued-job-count', TagEnum.integer) : [parsers.Integer(0).bytes()],
+			(SectionEnum.printer, b'pdl-override-supported', TagEnum.keyword) : [b'not-attempted'],
+			(SectionEnum.printer, b'printer-up-time', TagEnum.integer) : [parsers.Integer(self.printer_uptime()).bytes()],
+			(SectionEnum.printer, b'compression-supported', TagEnum.keyword) : [b'none'],
+		}
+		attr.update(self.minimal_attributes())
+		return attr
+
+	def print_job_attributes(self, job_id, new_job):
+		job_uri = b'%sjob/%s' % (self.base_uri, job_id,)
+
+		# rfc2911 section 4.3.8
+		# state, state_reasons = JobStateEnum.aborted, [b'job-canceled-at-device']
+
+		if new_job:
+			state, state_reasons = JobStateEnum.pending, [b'job-incoming', b'job-data-insufficient']
+		else:
+			state, state_reasons = JobStateEnum.completed, [b'none']
+
+		attr = {
+			# Required for print-job:
+
+			(SectionEnum.operation, b'job-uri', TagEnum.uri): [job_uri],
+			(SectionEnum.operation, b'job-id', TagEnum.integer): [parsers.Integer(int(job_id)).bytes()],
+			(SectionEnum.operation, b'job-state', TagEnum.enum): [parsers.Enum(state).bytes()],
+			(SectionEnum.operation, b'job-state-reasons', TagEnum.keyword): state_reasons,
+
+			# Required for get-job-attributes:
+
+			(SectionEnum.operation, b'job-printer-uri', TagEnum.uri): [self.printer_uri],
+			(SectionEnum.operation, b'job-name', TagEnum.name_without_language) : [b'Print job %s' % (job_id,)],
+			(SectionEnum.operation, b'job-originating-user-name', TagEnum.name_without_language) : [b'job-originating-user-name'],
+			(SectionEnum.operation, b'time-at-creation', TagEnum.integer) : [parsers.Integer(int(0)).bytes()],
+			(SectionEnum.operation, b'time-at-processing', TagEnum.integer) : [parsers.Integer(int(0)).bytes()],
+			(SectionEnum.operation, b'time-at-completed', TagEnum.integer) : [parsers.Integer(int(0)).bytes()],
+			(SectionEnum.operation, b'job-printer-up-time', TagEnum.integer) : [parsers.Integer(self.printer_uptime()).bytes()],
+
+		}
+		attr.update(self.minimal_attributes())
+		return attr
+
+	def printer_uptime(self):
+		return int(time.time())
 
 	def create_job(self, req):
 		"""Return a job id.
