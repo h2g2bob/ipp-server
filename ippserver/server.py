@@ -12,7 +12,6 @@ import logging
 import os.path
 
 from . import request
-from . import logic
 from .http_transport import HttpTransport, ConnectionClosedError
 
 

@@ -11,9 +11,9 @@ import time
 import uuid
 
 from . import parsers
-from .logic import JobStateEnum
-from .logic import OperationEnum
-from .logic import StatusCodeEnum
+from .constants import JobStateEnum
+from .constants import OperationEnum
+from .constants import StatusCodeEnum
 from .request import IppRequest
 from .request import SectionEnum, TagEnum
 
