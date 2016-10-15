@@ -14,8 +14,8 @@ from .server import run_server, ThreadedTCPServer, ThreadedTCPRequestHandler
 def parse_args():
 	parser = argparse.ArgumentParser(description='An IPP server')
 	parser.add_argument('-v', '--verbose', action='count', help='Add debugging')
-	parser.add_argument('--host', type=str, default='localhost', metavar='HOST', help='Address to listen on')
-	parser.add_argument('--port', type=int, required=True, metavar='PORT', help='Port to listen on')
+	parser.add_argument('-H', '--host', type=str, default='localhost', metavar='HOST', help='Address to listen on')
+	parser.add_argument('-p', '--port', type=int, required=True, metavar='PORT', help='Port to listen on')
 
 	parser_action = parser.add_subparsers(help='Actions', dest='action')
 
