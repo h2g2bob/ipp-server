@@ -13,7 +13,6 @@ import os.path
 
 from . import request
 from . import logic
-from .logic import expect_page_data_follows
 from .http_transport import HttpTransport, ConnectionClosedError
 
 
@@ -70,7 +69,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 		ipp_request_file = http.recv_body()
 		ipp_request = request.IppRequest.from_file(ipp_request_file)
 
-		if expect_page_data_follows(ipp_request):
+		if self.server.behaviour.expect_page_data_follows(ipp_request):
 			http.send_headers(status='100 Continue', content_type='application/ipp')
 			postscript_file = http.recv_body()
 		else:

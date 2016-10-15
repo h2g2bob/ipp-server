@@ -7,11 +7,8 @@ import logging
 import random
 import time
 
-from .request import IppRequest
 from .request import SectionEnum, TagEnum
 from . import parsers
-
-VERSION=(1, 1)
 
 PRINTER_URI=b'ipp://localhost:1234/printer'
 
@@ -46,96 +43,10 @@ class JobStateEnum(object):
 	aborted = 8
 	completed = 9
 
-def respond(req):
-	commands = {
-		OperationEnum.get_printer_attributes: operation_printer_list_response,
-		OperationEnum.cups_list_all_printers: operation_printer_list_response,
-		OperationEnum.cups_get_default: operation_printer_list_response,
-		OperationEnum.validate_job: operation_validate_job_response,
-		OperationEnum.get_jobs: operation_get_jobs_response,
-		OperationEnum.get_job_attrbutes: operation_get_job_attributes_response,
-		OperationEnum.print_job: operation_print_job_response,
-		0x0d0a: operation_misidentified_as_http,
-	}
-
-	try:
-		command_function = commands[req.opid_or_status]
-	except KeyError:
-		logging.warn('Operation not supported 0x%04x', req.opid_or_status)
-		command_function = operation_not_implemented_response
-
-	logging.info('IPP %r -> %r', req.opid_or_status, command_function)
-	return command_function(req)
-
-
-def operation_not_implemented_response(req):
-	attributes = minimal_attributes()
-	return IppRequest(
-		VERSION,
-		# StatusCodeEnum.server_error_operation_not_supported,
-		StatusCodeEnum.server_error_internal_error,
-		req.request_id,
-		attributes)
-
-def operation_printer_list_response(req):
-	attributes = printer_list_attributes()
-	return IppRequest(
-		VERSION,
-		StatusCodeEnum.ok,
-		req.request_id,
-		attributes)
-
-def operation_validate_job_response(req):
-	# TODO this just pretends it's ok!
-	attributes = minimal_attributes()
-	return IppRequest(
-		VERSION,
-		StatusCodeEnum.ok,
-		req.request_id,
-		attributes)
-
-def operation_get_jobs_response(req):
-	# an empty list of jobs, which probably breaks the rfc
-	# if the client asked for completed jobs
-	# https://tools.ietf.org/html/rfc2911#section-3.2.6.2
-	attributes = minimal_attributes()
-	return IppRequest(
-		VERSION,
-		StatusCodeEnum.ok,
-		req.request_id,
-		attributes)
-
-def operation_print_job_response(req):
-	job_id = random.randint(1,9999)
-	attributes = print_job_attributes(job_id, new_job=True)
-	return IppRequest(
-		VERSION,
-		StatusCodeEnum.ok,
-		req.request_id,
-		attributes)
-
-def operation_get_job_attributes_response(req):
-	# Should have all these attributes:
-	# https://tools.ietf.org/html/rfc2911#section-4.3
-
-	job_id = get_job_id(req)
-	attributes = print_job_attributes(job_id, new_job=False)
-	return IppRequest(
-		VERSION,
-		StatusCodeEnum.ok,
-		req.request_id,
-		attributes)
-
-def operation_misidentified_as_http(req):
-	raise Exception("The opid for this operation is \\r\\n, which suggests the request was actually a http request.")
 
 
 def get_job_id(req):
 	return parsers.Integer.from_bytes(req.only(SectionEnum.operation, 'job-id', TagEnum.integer)).integer
-
-
-def expect_page_data_follows(ipp_request):
-	return ipp_request.opid_or_status == OperationEnum.print_job
 
 
 def minimal_attributes():
