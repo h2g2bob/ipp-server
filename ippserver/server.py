@@ -13,7 +13,7 @@ import os.path
 
 from . import request
 from . import logic
-from .logic import get_job_id, expect_page_data_follows
+from .logic import expect_page_data_follows
 from .http_transport import HttpTransport, ConnectionClosedError
 
 
@@ -84,14 +84,13 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 	def do_action(self, ipp_request, postscript_file):
 		ipp_response = logic.respond(ipp_request)
 		if expect_page_data_follows(ipp_request):
-			job_id = get_job_id(ipp_response)
 			blocks = []
 			while True:
 				block = postscript_file.read(1024)
 				if block == b'':
 					break
 				blocks.append(block)
-			self.server.action_function(job_id, b''.join(blocks))
+			self.server.action_function(b''.join(blocks))
 
 		return ipp_response
 

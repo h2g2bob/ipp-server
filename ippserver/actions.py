@@ -11,8 +11,8 @@ import uuid
 
 
 def save_to_directory(directory):
-	def do_save_to_directory(job_id, data):
-		leaf = 'ipp-server-print-job-%d-%s.ps' % (job_id, uuid.uuid1(),)
+	def do_save_to_directory(data):
+		leaf = 'ipp-server-print-job-%s.ps' % (uuid.uuid1(),)
 		filename = os.path.join(directory, leaf)
 		with open(filename, 'wb') as diskfile:
 			diskfile.write(data)
@@ -20,8 +20,8 @@ def save_to_directory(directory):
 	return do_save_to_directory
 
 def run_command(command):
-	def do_run_command(job_id, data):
-		logging.info('Running command for job %r', job_id)
+	def do_run_command(data):
+		logging.info('Running command for job')
 		proc = subprocess.Popen(
 			command,
 			stdin=subprocess.PIPE)
