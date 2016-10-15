@@ -129,8 +129,14 @@ def operation_get_job_attributes_response(req):
 def operation_misidentified_as_http(req):
 	raise Exception("The opid for this operation is \\r\\n, which suggests the request was actually a http request.")
 
+
 def get_job_id(req):
 	return parsers.Integer.from_bytes(req.only(SectionEnum.operation, 'job-id', TagEnum.integer)).integer
+
+
+def expect_page_data_follows(ipp_request):
+	return ipp_request.opid_or_status == OperationEnum.print_job
+
 
 def minimal_attributes():
 	return {

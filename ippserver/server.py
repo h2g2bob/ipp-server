@@ -3,54 +3,87 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from StringIO import StringIO
 import socket
 import threading
 import SocketServer
 import time
 import logging
+import os.path
 
-from . import http
 from . import request
 from . import logic
-from .logic import OperationEnum, get_job_id
-from .http_reader import HttpRequest
+from .logic import get_job_id, expect_page_data_follows
+from .http_transport import HttpTransport, ConnectionClosedError
+
+
+def local_file_location(filename):
+	return os.path.join(os.path.dirname(__file__), 'data', filename)
+
 
 class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 	def handle(self):
+		http = HttpTransport(self.rfile, self.wfile)
+		http.recv_headers()
+
 		try:
-			httpfile = HttpRequest(self.rfile)
-			logging.debug('method=%r path=%r', httpfile.method, httpfile.path)
-			if httpfile.method == 'POST':
-				http_continue, resp = self.handle_ipp(httpfile)
-				http.write_http(
-					self.wfile,
-					content_type='application/ipp',
-					status='100 Continue' if http_continue else '200 OK')
-				if http_continue:
-					job_id = get_job_id(resp)
-					data = httpfile.read(None)
-					self.server.action_function(job_id, data)
-				resp.to_file(self.wfile)
-			elif httpfile.method == 'GET' and httpfile.path == '/':
-				http.write_http_hello(self.wfile)
-			elif httpfile.method == 'GET' and httpfile.path.endswith('.ppd'):
-				http.write_http_ppd(self.wfile)
-			elif httpfile.method == 'GET':
-				http.write_http_missing(self.wfile)
+			if http.method == 'POST':
+				self.handle_ipp(http)
+			elif http.method == 'GET':
+				self.handle_www(http)
 			else:
-				raise Exception('Not supported %r %r' % (httpfile.method, httpfile.path))
+				raise ValueError(http.method)
 		except Exception:
 			logging.exception('Failed to parse')
-			http.write_http_error(self.wfile)
-		self.wfile.flush()
+			http.send_headers(status='500 Server error', content_type='text/plain')
+			with open(local_file_location('error.txt'), 'r') as error_file:
+				http.send_body(error_file)
 
-	def handle_ipp(self, httpfile):
-		req = request.IppRequest.from_file(httpfile)
-		http_continue = req.opid_or_status == OperationEnum.print_job
-		logging.debug('Got request %r', req)
-		resp = logic.respond(req)
-		logging.debug('Using response %r', resp)
-		return http_continue, resp
+		http.close()  # no content-length header and no chunked response
+
+	def handle_www(self, http):
+		if http.path == '/':
+			http.send_headers(status='200 OK', content_type='text/plain')
+			with open(local_file_location('homepage.txt'), 'r') as homepage_file:
+				http.send_body(homepage_file)
+		elif http.path.endswith('.ppd'):
+			http.send_headers(status='200 OK', content_type='text/plain')
+			with open(local_file_location('ipp-server.ppd'), 'r') as ppd_file:
+				http.send_body(ppd_file)
+		else:
+			http.send_headers(status='404 Not found', content_type='text/plain')
+			with open(local_file_location('404.txt'), 'r') as homepage_file:
+				http.send_body(homepage_file)
+
+
+	def handle_ipp(self, http):
+		ipp_request_file = http.recv_body()
+		ipp_request = request.IppRequest.from_file(ipp_request_file)
+
+		if expect_page_data_follows(ipp_request):
+			http.send_headers(status='100 Continue', content_type='application/ipp')
+			postscript_file = http.recv_body()
+		else:
+			http.send_headers(status='200 OK', content_type='application/ipp')
+			postscript_file = None
+
+		ipp_response = self.do_action(ipp_request, postscript_file)
+		http.send_body(StringIO(ipp_response.to_string())) # XXX inefficient
+
+
+	def do_action(self, ipp_request, postscript_file):
+		ipp_response = logic.respond(ipp_request)
+		if expect_page_data_follows(ipp_request):
+			job_id = get_job_id(ipp_response)
+			blocks = []
+			while True:
+				block = postscript_file.read(1024)
+				if block == b'':
+					break
+				blocks.append(block)
+			self.server.action_function(job_id, b''.join(blocks))
+
+		return ipp_response
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
 	allow_reuse_address = True
