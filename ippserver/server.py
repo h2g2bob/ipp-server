@@ -30,7 +30,11 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 
 	def _handle(self):
 		http = HttpTransport(self.rfile, self.wfile)
-		http.recv_headers()
+		try:
+			http.recv_headers()
+		except ConnectionClosedError:
+			logging.debug('Handled request which was immediately closed')
+			return
 
 		try:
 			if http.method == 'POST':
