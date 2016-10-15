@@ -7,9 +7,11 @@ import logging
 
 
 class StatusCodeEnum(object):
+	# https://tools.ietf.org/html/rfc2911#section-13.1
 	ok = 0x0000
 	server_error_internal_error = 0x0500
 	server_error_operation_not_supported = 	0x0501
+	server_error_job_canceled = 0x508
 
 
 class OperationEnum(object):

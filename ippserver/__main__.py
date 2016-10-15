@@ -25,6 +25,8 @@ def parse_args():
 	parser_command = parser_action.add_parser('run', help='Run a command when recieving a print job')
 	parser_command.add_argument('command', nargs=argparse.REMAINDER, metavar='COMMAND', help='Command to run')
 
+	parser_command = parser_action.add_parser('reject', help='Respond to all print jobs with job-canceled-at-device')
+
 	return parser.parse_args()
 
 def behaviour_from_args(args):
@@ -32,6 +34,8 @@ def behaviour_from_args(args):
 		return behaviour.SaveFilePrinter(directory=args.directory)
 	if args.action == 'run':
 		return behaviour.RunCommandPrinter(command=args.command)
+	if args.action == 'reject':
+		return behaviour.RejectAllPrinter()
 	raise RuntimeError(args)
 
 def main(args):

@@ -131,7 +131,7 @@ class StatelessPrinter(Behaviour):
 
 	def operation_print_job_response(self, req, psfile):
 		job_id = self.create_job(req)
-		attributes = self.print_job_attributes(job_id, new_job=True)
+		attributes = self.print_job_attributes(job_id, JobStateEnum.pending, [b'job-incoming', b'job-data-insufficient'])
 		self.handle_postscript(req, psfile)
 		return IppRequest(
 			self.version,
@@ -144,7 +144,7 @@ class StatelessPrinter(Behaviour):
 		# https://tools.ietf.org/html/rfc2911#section-4.3
 
 		job_id = get_job_id(req)
-		attributes = self.print_job_attributes(job_id, new_job=False)
+		attributes = self.print_job_attributes(job_id, JobStateEnum.completed, [b'none'])
 		return IppRequest(
 			self.version,
 			StatusCodeEnum.ok,
@@ -200,16 +200,10 @@ class StatelessPrinter(Behaviour):
 		attr.update(self.minimal_attributes())
 		return attr
 
-	def print_job_attributes(self, job_id, new_job):
+	def print_job_attributes(self, job_id, state, state_reasons):
+		# state reasons come from rfc2911 section 4.3.8
+
 		job_uri = b'%sjob/%s' % (self.base_uri, job_id,)
-
-		# rfc2911 section 4.3.8
-		# state, state_reasons = JobStateEnum.aborted, [b'job-canceled-at-device']
-
-		if new_job:
-			state, state_reasons = JobStateEnum.pending, [b'job-incoming', b'job-data-insufficient']
-		else:
-			state, state_reasons = JobStateEnum.completed, [b'none']
 
 		attr = {
 			# Required for print-job:
@@ -247,6 +241,44 @@ class StatelessPrinter(Behaviour):
 
 	def handle_postscript(self, ipp_request, postscript_file):
 		raise NotImplementedError
+
+
+class RejectAllPrinter(StatelessPrinter):
+	"""A printer that rejects all the print jobs it recieves.
+
+	Cups ignores the rejection notice. I suspect this is because the
+	communication is:
+		recv http post headers
+		recv ipp print_job
+		send http continue headers
+		recv data
+		send ipp aborted
+
+	But to be effective, I suspect the errors need to be sent before the
+	http continue:
+		recv http post headers
+		recv ipp print_job
+		send http headers
+		send ipp aborted
+	"""
+
+	def operation_print_job_response(self, req, _psfile):
+		job_id = self.create_job(req)
+		attributes = self.print_job_attributes(job_id, JobStateEnum.aborted, [b'job-canceled-at-device'])
+		return IppRequest(
+			self.version,
+			StatusCodeEnum.server_error_job_canceled,
+			req.request_id,
+			attributes)
+
+	def operation_get_job_attributes_response(self, req, _psfile):
+		job_id = get_job_id(req)
+		attributes = self.print_job_attributes(job_id, JobStateEnum.aborted, [b'job-canceled-at-device'])
+		return IppRequest(
+			self.version,
+			StatusCodeEnum.server_error_job_canceled,
+			req.request_id,
+			attributes)
 
 
 class SaveFilePrinter(StatelessPrinter):
