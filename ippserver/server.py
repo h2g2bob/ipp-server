@@ -91,11 +91,11 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 
 		return ipp_response
 
-class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
 	allow_reuse_address = True
 	def __init__(self, address, request_handler, action_function):
 		self.action_function = action_function
-		SocketServer.TCPServer.__init__(self, address, request_handler)  # old style class!
+		SocketServer.ThreadingTCPServer.__init__(self, address, request_handler)  # old style class!
 
 def wait_until_ctrl_c():
 	try:
