@@ -326,3 +326,5 @@ class RunCommandPrinter(StatelessPrinter):
 		if proc.returncode:
 			raise Exception('The command %r exited with code %r', command, proc.returncode)
 
+class RunCommandPdfPrinter(RunCommandPrinter):
+	ppd = BasicPdfPPD()
