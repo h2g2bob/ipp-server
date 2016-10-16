@@ -14,6 +14,7 @@ from . import parsers
 from .constants import JobStateEnum
 from .constants import OperationEnum
 from .constants import StatusCodeEnum
+from .ppd import BasicPostscriptPPD, BasicPdfPPD
 from .request import IppRequest
 from .request import SectionEnum, TagEnum
 
@@ -36,7 +37,7 @@ class Behaviour(object):
 	version=(1, 1)
 	base_uri=b'ipp://localhost:1234/'
 	printer_uri=b'ipp://localhost:1234/printer'
-	ppd_file_name='ipp-server.ppd'
+	ppd = BasicPostscriptPPD()
 
 	def expect_page_data_follows(self, ipp_request):
 		return ipp_request.opid_or_status == OperationEnum.print_job
@@ -306,7 +307,7 @@ class SaveFilePrinter(StatelessPrinter):
 
 
 class SaveFilePdfPrinter(SaveFilePrinter):
-	ppd_file_name='ipp-server-pdf.ppd'
+	ppd = BasicPdfPPD()
 	filename_ext = 'pdf'
 
 
