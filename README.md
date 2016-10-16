@@ -48,6 +48,16 @@ python -m ippserver --port 1234 run \
 ```
 
 
+PDF files
+---------
+
+The printer normally advertises itself as a postscript printer. Alternatively, the printer can advertise itself as a PDF printer. This changes the printer description (PPD), so you will need to re-add the printer (eg: with a different port).
+
+Run the printer with `save --pdf`, and add a new printer:
+```
+python -m ippserver --port 7777 save --pdf /tmp/
+```
+
 
 [hexdump(1)]: https://linux.die.net/man/1/hexdump
 [mail(1)]:  https://linux.die.net/man/1/mail

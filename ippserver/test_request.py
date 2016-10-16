@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .http_reader import HttpRequest
-from .logic import OperationEnum
+from .constants import OperationEnum
 from .request import IppRequest, TagEnum, SectionEnum
 
 from StringIO import StringIO

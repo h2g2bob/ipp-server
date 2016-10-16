@@ -7,7 +7,7 @@ import argparse
 import logging
 import sys
 
-from . import actions
+from . import behaviour
 from .server import run_server, ThreadedTCPServer, ThreadedTCPRequestHandler
 
 
@@ -20,18 +20,26 @@ def parse_args():
 	parser_action = parser.add_subparsers(help='Actions', dest='action')
 
 	parser_save = parser_action.add_parser('save', help='Write any print jobs to disk')
+	parser_save.add_argument('--pdf', action='store_true', default=False, help='Request that CUPs sends the document as a PDF file, instead of a PS file. CUPs detects this setting when ADDING a printer: you may need to re-add the printer on a different port')
 	parser_save.add_argument('directory', metavar='DIRECTORY', help='Directory to save files into')
 
 	parser_command = parser_action.add_parser('run', help='Run a command when recieving a print job')
 	parser_command.add_argument('command', nargs=argparse.REMAINDER, metavar='COMMAND', help='Command to run')
 
+	parser_command = parser_action.add_parser('reject', help='Respond to all print jobs with job-canceled-at-device')
+
 	return parser.parse_args()
 
-def action_function_from_args(args):
+def behaviour_from_args(args):
 	if args.action == 'save':
-		return actions.save_to_directory(directory=args.directory)
+		if args.pdf:
+			return behaviour.SaveFilePdfPrinter(directory=args.directory)
+		else:
+			return behaviour.SaveFilePrinter(directory=args.directory)
 	if args.action == 'run':
-		return actions.run_command(command=args.command)
+		return behaviour.RunCommandPrinter(command=args.command)
+	if args.action == 'reject':
+		return behaviour.RejectAllPrinter()
 	raise RuntimeError(args)
 
 def main(args):
@@ -40,7 +48,7 @@ def main(args):
 	server = ThreadedTCPServer(
 		(args.host, args.port),
 		ThreadedTCPRequestHandler,
-		action_function_from_args(args))
+		behaviour_from_args(args))
 	run_server(server)
 
 if __name__ == "__main__":
