@@ -20,6 +20,7 @@ def parse_args():
 	parser_action = parser.add_subparsers(help='Actions', dest='action')
 
 	parser_save = parser_action.add_parser('save', help='Write any print jobs to disk')
+	parser_save.add_argument('--pdf', action='store_true', default=False, help='Request that CUPs sends the document as a PDF file, instead of a PS file. CUPs detects this setting when ADDING a printer: you may need to re-add the printer on a different port')
 	parser_save.add_argument('directory', metavar='DIRECTORY', help='Directory to save files into')
 
 	parser_command = parser_action.add_parser('run', help='Run a command when recieving a print job')
@@ -31,7 +32,10 @@ def parse_args():
 
 def behaviour_from_args(args):
 	if args.action == 'save':
-		return behaviour.SaveFilePrinter(directory=args.directory)
+		if args.pdf:
+			return behaviour.SaveFilePdfPrinter(directory=args.directory)
+		else:
+			return behaviour.SaveFilePrinter(directory=args.directory)
 	if args.action == 'run':
 		return behaviour.RunCommandPrinter(command=args.command)
 	if args.action == 'reject':

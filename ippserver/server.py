@@ -56,7 +56,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 				http.send_body(homepage_file)
 		elif http.path.endswith('.ppd'):
 			http.send_headers(status='200 OK', content_type='text/plain')
-			with open(local_file_location('ipp-server.ppd'), 'r') as ppd_file:
+			with open(local_file_location(self.server.behaviour.ppd_file_name), 'r') as ppd_file:
 				http.send_body(ppd_file)
 		else:
 			http.send_headers(status='404 Not found', content_type='text/plain')

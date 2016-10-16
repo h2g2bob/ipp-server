@@ -36,6 +36,7 @@ class Behaviour(object):
 	version=(1, 1)
 	base_uri=b'ipp://localhost:1234/'
 	printer_uri=b'ipp://localhost:1234/printer'
+	ppd_file_name='ipp-server.ppd'
 
 	def expect_page_data_follows(self, ipp_request):
 		return ipp_request.opid_or_status == OperationEnum.print_job
@@ -282,6 +283,8 @@ class RejectAllPrinter(StatelessPrinter):
 
 
 class SaveFilePrinter(StatelessPrinter):
+	filename_ext = 'ps'
+
 	def __init__(self, directory):
 		self.directory = directory
 		super(SaveFilePrinter, self).__init__()
@@ -299,7 +302,12 @@ class SaveFilePrinter(StatelessPrinter):
 
 	def leaf_filename(self, _ipp_request):
 		# Possibly use the job name from the ipp_request?
-		return 'ipp-server-print-job-%s.ps' % (uuid.uuid1(),)
+		return 'ipp-server-print-job-%s.%s' % (uuid.uuid1(), self.filename_ext,)
+
+
+class SaveFilePdfPrinter(SaveFilePrinter):
+	ppd_file_name='ipp-server-pdf.ppd'
+	filename_ext = 'pdf'
 
 
 class RunCommandPrinter(StatelessPrinter):
