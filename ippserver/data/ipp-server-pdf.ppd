@@ -13,24 +13,27 @@
 *%  |____________|/
 *% 
 
+*% About this PPD file
 *LanguageLevel: "2"
-*ColorDevice: True
-*FileSystem: False
-*Throughput: "1"
-
-
 *LanguageEncoding: ISOLatin1
 *LanguageVersion: English
 *PCFileName: "ipp-server-filename.ppd"
+
+*% Basic capabilities of the device
+*FileSystem: False
+
+*% Printer name
 *Product: "ipp-server-product"
 *Manufacturer:  "ipp-server-manufacturer"
-*ModelName: "ipp-server-modelname"
+*ModelName: "PDF printer"
 
+*% Color
 *ColorDevice: True
 *DefaultColorSpace: CMYK
 *Throughput: "1"
 *Password: "0"
 
+*% The printer can only handle PDF files, so get CUPS to send that
 *% https://en.wikipedia.org/wiki/CUPS#Filter_system
 *% https://www.cups.org/doc/spec-ppd.html
 *cupsFilter2: "application/pdf application/vnd.cups-pdf 0 pdftopdf"
