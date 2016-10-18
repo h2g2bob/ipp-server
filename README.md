@@ -4,13 +4,7 @@ A minimal IPP server
 
 This is a small python script which __pretends to be a printer__.
 
-
-Does it work
-------------
-
-Yes, it works well enough to print documents on my Linux box with CUPS 1.7.5.
-
-It doesn't implement the entire IPP specification, so I make no guarantee.
+It works well enough to print documents on my Linux box with CUPS 1.7.5, but it doesn't implement the entire IPP specification.
 
 
 Add ipp-server as a printer
