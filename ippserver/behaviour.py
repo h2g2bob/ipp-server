@@ -317,6 +317,13 @@ class SaveFilePrinter(StatelessPrinter):
 		return 'ipp-server-print-job-%s.%s' % (uuid.uuid1(), self.filename_ext,)
 
 
+class SaveAndRunPrinter(SaveFilePrinter):
+	def __init__(self, directory, filename_ext, command):
+		self.command = command
+		super(SaveAndRunPrinter, self).__init__(directory=directory, filename_ext=filename_ext)
+
+	def run_after_saving(self, filename):
+		subprocess.check_call(self.command + [filename])
 
 
 class RunCommandPrinter(StatelessPrinter):

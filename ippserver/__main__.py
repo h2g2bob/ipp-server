@@ -29,6 +29,11 @@ def parse_args():
 	parser_command.add_argument('command', nargs=argparse.REMAINDER, metavar='COMMAND', help='Command to run')
 	parser_command.add_argument('--pdf', action='store_true', default=False, help=pdf_help)
 
+	parser_saverun = parser_action.add_parser('saveandrun', help='Write any print jobs to disk and the run a command on them')
+	parser_saverun.add_argument('--pdf', action='store_true', default=False, help=pdf_help)
+	parser_saverun.add_argument('directory', metavar='DIRECTORY', help='Directory to save files into')
+	parser_saverun.add_argument('command', nargs=argparse.REMAINDER, metavar='COMMAND', help='Command to run (the filename will be added at the end)')
+
 	parser_command = parser_action.add_parser('reject', help='Respond to all print jobs with job-canceled-at-device')
 
 	return parser.parse_args()
@@ -41,6 +46,11 @@ def behaviour_from_args(args):
 	if args.action == 'run':
 		return behaviour.RunCommandPrinter(
 			command=args.command,
+			filename_ext='pdf' if args.pdf else 'ps')
+	if args.action == 'saveandrun':
+		return behaviour.SaveAndRunPrinter(
+			command=args.command,
+			directory=args.directory,
 			filename_ext='pdf' if args.pdf else 'ps')
 	if args.action == 'reject':
 		return behaviour.RejectAllPrinter()
