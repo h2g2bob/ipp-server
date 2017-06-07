@@ -35,15 +35,13 @@ def parse_args():
 
 def behaviour_from_args(args):
 	if args.action == 'save':
-		if args.pdf:
-			return behaviour.SaveFilePdfPrinter(directory=args.directory)
-		else:
-			return behaviour.SaveFilePrinter(directory=args.directory)
+		return behaviour.SaveFilePrinter(
+			directory=args.directory,
+			filename_ext='pdf' if args.pdf else 'ps')
 	if args.action == 'run':
-		if args.pdf:
-			return behaviour.RunCommandPdfPrinter(command=args.command)
-		else:
-			return behaviour.RunCommandPrinter(command=args.command)
+		return behaviour.RunCommandPrinter(
+			command=args.command,
+			filename_ext='pdf' if args.pdf else 'ps')
 	if args.action == 'reject':
 		return behaviour.RejectAllPrinter()
 	raise RuntimeError(args)

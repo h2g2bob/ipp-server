@@ -37,7 +37,9 @@ class Behaviour(object):
 	version=(1, 1)
 	base_uri=b'ipp://localhost:1234/'
 	printer_uri=b'ipp://localhost:1234/printer'
-	ppd = BasicPostscriptPPD()
+
+	def __init__(self, ppd=BasicPostscriptPPD()):
+		self.ppd = ppd
 
 	def expect_page_data_follows(self, ipp_request):
 		return ipp_request.opid_or_status == OperationEnum.print_job
@@ -284,11 +286,16 @@ class RejectAllPrinter(StatelessPrinter):
 
 
 class SaveFilePrinter(StatelessPrinter):
-	filename_ext = 'ps'
-
-	def __init__(self, directory):
+	def __init__(self, directory, filename_ext):
 		self.directory = directory
-		super(SaveFilePrinter, self).__init__()
+		self.filename_ext = filename_ext
+
+		ppd = {
+			'ps': BasicPostscriptPPD(),
+			'pdf': BasicPdfPPD(),
+		}[filename_ext]
+
+		super(SaveFilePrinter, self).__init__(ppd=ppd)
 
 	def handle_postscript(self, ipp_request, postscript_file):
 		filename = self.filename(ipp_request)
@@ -296,6 +303,10 @@ class SaveFilePrinter(StatelessPrinter):
 		with open(filename, 'wb') as diskfile:
 			for block in read_in_blocks(postscript_file):
 				diskfile.write(block)
+		self.run_after_saving(filename)
+
+	def run_after_saving(self, filename):
+		pass
 
 	def filename(self, ipp_request):
 		leaf = self.leaf_filename(ipp_request)
@@ -306,15 +317,18 @@ class SaveFilePrinter(StatelessPrinter):
 		return 'ipp-server-print-job-%s.%s' % (uuid.uuid1(), self.filename_ext,)
 
 
-class SaveFilePdfPrinter(SaveFilePrinter):
-	ppd = BasicPdfPPD()
-	filename_ext = 'pdf'
 
 
 class RunCommandPrinter(StatelessPrinter):
-	def __init__(self, command):
+	def __init__(self, command, filename_ext):
 		self.command = command
-		super(RunCommandPrinter, self).__init__()
+
+		ppd = {
+			'ps': BasicPostscriptPPD(),
+			'pdf': BasicPdfPPD(),
+		}[filename_ext]
+
+		super(RunCommandPrinter, self).__init__(ppd=ppd)
 
 	def handle_postscript(self, _ipp_request, postscript_file):
 		logging.info('Running command for job')
@@ -325,6 +339,3 @@ class RunCommandPrinter(StatelessPrinter):
 		proc.communicate(data)
 		if proc.returncode:
 			raise Exception('The command %r exited with code %r', command, proc.returncode)
-
-class RunCommandPdfPrinter(RunCommandPrinter):
-	ppd = BasicPdfPPD()
