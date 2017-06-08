@@ -346,3 +346,23 @@ class RunCommandPrinter(StatelessPrinter):
 		proc.communicate(data)
 		if proc.returncode:
 			raise Exception('The command %r exited with code %r', command, proc.returncode)
+
+
+class PostageServicePrinter(StatelessPrinter):
+	def __init__(self, service_api, filename_ext):
+		self.service_api = service_api
+		self.filename_ext = filename_ext
+
+		ppd = {
+			'ps': BasicPostscriptPPD(),
+			'pdf': BasicPdfPPD(),
+		}[filename_ext]
+
+		super(PostageServicePrinter, self).__init__(ppd=ppd)
+
+	def handle_postscript(self, _ipp_request, postscript_file):
+		filename = b'ipp-server-{}.{}'.format(
+			int(time.time()),
+			self.filename_ext)
+		data = b''.join(read_in_blocks(postscript_file))
+		self.service_api.post_pdf_letter(filename, data)

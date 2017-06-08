@@ -8,6 +8,7 @@ import logging
 import sys
 
 from . import behaviour
+from .pc2paper import Pc2Paper
 from .server import run_server, ThreadedTCPServer, ThreadedTCPRequestHandler
 
 
@@ -36,6 +37,10 @@ def parse_args():
 
 	parser_command = parser_action.add_parser('reject', help='Respond to all print jobs with job-canceled-at-device')
 
+	parser_command = parser_action.add_parser('pc2paper', help='Post print jobs usign http://www.pc2paper.org/')
+	parser_command.add_argument('--pdf', action='store_true', default=False, help=pdf_help)
+	parser_command.add_argument('--config', metavar='CONFIG', help='File containging an address to send to, in json format')
+
 	return parser.parse_args()
 
 def behaviour_from_args(args):
@@ -51,6 +56,11 @@ def behaviour_from_args(args):
 		return behaviour.SaveAndRunPrinter(
 			command=args.command,
 			directory=args.directory,
+			filename_ext='pdf' if args.pdf else 'ps')
+	if args.action == 'pc2paper':
+		pc2paper_config = Pc2Paper.from_config_file(args.config)
+		return behaviour.PostageServicePrinter(
+			service_api=pc2paper_config,
 			filename_ext='pdf' if args.pdf else 'ps')
 	if args.action == 'reject':
 		return behaviour.RejectAllPrinter()
