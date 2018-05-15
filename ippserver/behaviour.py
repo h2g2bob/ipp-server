@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import logging
+import os
 import os.path
 import random
 import subprocess
@@ -30,6 +31,11 @@ def read_in_blocks(postscript_file):
 			break
 		else:
 			yield block
+
+def prepare_environment(ipp_request):
+	env = os.environ.copy()
+	env["IPP_JOB_ATTRIBUTES"] = json.dumps(ipp_request.attributes_to_multilevel(SectionEnum.job))
+	return env
 
 
 class Behaviour(object):
@@ -302,7 +308,7 @@ class SaveFilePrinter(StatelessPrinter):
 		with open(filename, 'wb') as diskfile:
 			for block in read_in_blocks(postscript_file):
 				diskfile.write(block)
-		self.run_after_saving(filename)
+		self.run_after_saving(filename, ipp_request)
 
 	def run_after_saving(self, filename):
 		pass
@@ -317,17 +323,22 @@ class SaveFilePrinter(StatelessPrinter):
 
 
 class SaveAndRunPrinter(SaveFilePrinter):
-	def __init__(self, directory, filename_ext, command):
+	def __init__(self, directory, use_env, filename_ext, command):
 		self.command = command
+		self.use_env = use_env
 		super(SaveAndRunPrinter, self).__init__(directory=directory, filename_ext=filename_ext)
 
-	def run_after_saving(self, filename):
-		subprocess.check_call(self.command + [filename])
+	def run_after_saving(self, filename, ipp_request):
+		proc = subprocess.Popen(self.command + [filename], env=prepare_environment(ipp_request) if self.use_env else None)
+		proc.communicate()
+		if proc.returncode:
+			raise Exception('The command %r exited with code %r', command, proc.returncode)
 
 
 class RunCommandPrinter(StatelessPrinter):
-	def __init__(self, command, filename_ext):
+	def __init__(self, command, use_env, filename_ext):
 		self.command = command
+		self.use_env = use_env
 
 		ppd = {
 			'ps': BasicPostscriptPPD(),
@@ -339,7 +350,7 @@ class RunCommandPrinter(StatelessPrinter):
 	def handle_postscript(self, _ipp_request, postscript_file):
 		logging.info('Running command for job')
 		proc = subprocess.Popen(
-			self.command,
+			self.command, env=prepare_environment(ipp_request) if self.use_env else None,
 			stdin=subprocess.PIPE)
 		data = b''.join(read_in_blocks(postscript_file))
 		proc.communicate(data)

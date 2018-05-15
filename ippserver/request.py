@@ -137,6 +137,16 @@ class IppRequest(object):
 					f.write(value)
 		write_struct(f, b'>B', SectionEnum.END)
 
+	def attributes_to_multilevel(self, section=None):
+		ret = {}
+		for key in self._attributes.keys():
+			if section and section != key[0]:
+				continue
+			ret.setdefault(key[0], {})
+			ret[key[0]].setdefault(key[1], {})
+			ret[key[0]][key[1]][key[2]] = self._attributes[key]
+		return ret
+
 	def lookup(self, section, name, tag):
 		return self._attributes[section, name, tag]
 
