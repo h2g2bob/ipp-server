@@ -7,6 +7,12 @@ import argparse
 import logging
 import sys
 
+if sys.version_info[0] < 3:
+    __package__ = b"ippserver"
+else:
+    __package__ = "ippserver"
+
+
 from . import behaviour
 from .pc2paper import Pc2Paper
 from .server import run_server, ThreadedTCPServer, ThreadedTCPRequestHandler

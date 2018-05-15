@@ -3,10 +3,13 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from StringIO import StringIO
+from io import BytesIO
 import socket
 import threading
-import SocketServer
+try:
+    import socketserver
+except ImportError:
+    import SocketServer as socketserver
 import time
 import logging
 import os.path
@@ -19,7 +22,7 @@ def local_file_location(filename):
 	return os.path.join(os.path.dirname(__file__), 'data', filename)
 
 
-class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
+class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 	def handle(self):
 		try:
 			self._handle()
@@ -57,7 +60,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 		elif http.path.endswith('.ppd'):
 			http.send_headers(status='200 OK', content_type='text/plain')
 			ppd_file_text = self.server.behaviour.ppd.text()
-			http.send_body(StringIO(ppd_file_text))
+			http.send_body(BytesIO(ppd_file_text))
 		else:
 			http.send_headers(status='404 Not found', content_type='text/plain')
 			with open(local_file_location('404.txt'), 'r') as homepage_file:
@@ -76,14 +79,14 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
 			postscript_file = None
 
 		ipp_response = self.server.behaviour.handle_ipp(ipp_request, postscript_file)
-		http.send_body(StringIO(ipp_response.to_string())) # XXX inefficient
+		http.send_body(BytesIO(ipp_response.to_string())) # XXX inefficient
 
 
-class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
+class ThreadedTCPServer(socketserver.ThreadingTCPServer):
 	allow_reuse_address = True
 	def __init__(self, address, request_handler, behaviour):
 		self.behaviour = behaviour
-		SocketServer.ThreadingTCPServer.__init__(self, address, request_handler)  # old style class!
+		socketserver.ThreadingTCPServer.__init__(self, address, request_handler)  # old style class!
 
 def wait_until_ctrl_c():
 	try:
