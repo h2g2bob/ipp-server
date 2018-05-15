@@ -20,6 +20,8 @@ class Value(object):
 		raise NotImplementedError()
 	def bytes(self):
 		raise NotImplementedError()
+	def __bytes__(self):
+		return self.bytes()
 
 class Boolean(Value):
 	def __init__(self, value):

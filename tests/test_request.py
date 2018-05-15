@@ -1,7 +1,11 @@
+#! /usr/bin/python
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ippserver.http_transport import HttpTransport
 from ippserver.constants import OperationEnum

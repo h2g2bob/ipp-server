@@ -47,7 +47,7 @@ class Behaviour(object):
 
 	def handle_ipp(self, ipp_request, postscript_file):
 		command_function = self.get_handle_command_function(ipp_request.opid_or_status)
-		logging.info('IPP %r -> %r', ipp_request.opid_or_status, command_function)
+		logging.debug('IPP %r -> %r', ipp_request.opid_or_status, command_function)
 		return command_function(ipp_request, postscript_file)
 
 	def get_handle_command_function(self, opid_or_status):
@@ -206,8 +206,7 @@ class StatelessPrinter(Behaviour):
 
 	def print_job_attributes(self, job_id, state, state_reasons):
 		# state reasons come from rfc2911 section 4.3.8
-
-		job_uri = b'%sjob/%s' % (self.base_uri, job_id,)
+		job_uri = b'%sjob/%s' % (self.base_uri, parsers.Integer(job_id).bytes(),)
 
 		attr = {
 			# Required for print-job:
@@ -220,7 +219,7 @@ class StatelessPrinter(Behaviour):
 			# Required for get-job-attributes:
 
 			(SectionEnum.operation, b'job-printer-uri', TagEnum.uri): [self.printer_uri],
-			(SectionEnum.operation, b'job-name', TagEnum.name_without_language) : [b'Print job %s' % (job_id,)],
+			(SectionEnum.operation, b'job-name', TagEnum.name_without_language) : [b'Print job %s' % parsers.Integer(job_id).bytes()],
 			(SectionEnum.operation, b'job-originating-user-name', TagEnum.name_without_language) : [b'job-originating-user-name'],
 			(SectionEnum.operation, b'time-at-creation', TagEnum.integer) : [parsers.Integer(int(0)).bytes()],
 			(SectionEnum.operation, b'time-at-processing', TagEnum.integer) : [parsers.Integer(int(0)).bytes()],

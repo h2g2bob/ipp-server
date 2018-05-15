@@ -38,16 +38,16 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 			return
 
 		try:
-			if http.method == 'POST':
+			if http.method == b'POST':
 				self.handle_ipp(http)
-			elif http.method == 'GET':
+			elif http.method == b'GET':
 				self.handle_www(http)
 			else:
 				raise ValueError(http.method)
 		except Exception:
 			logging.exception('Failed to parse')
 			http.send_headers(status='500 Server error', content_type='text/plain')
-			with open(local_file_location('error.txt'), 'r') as error_file:
+			with open(local_file_location('error.txt'), 'rb') as error_file:
 				http.send_body(error_file)
 
 		http.close()  # no content-length header and no chunked response
@@ -55,7 +55,7 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 	def handle_www(self, http):
 		if http.path == '/':
 			http.send_headers(status='200 OK', content_type='text/plain')
-			with open(local_file_location('homepage.txt'), 'r') as homepage_file:
+			with open(local_file_location('homepage.txt'), 'rb') as homepage_file:
 				http.send_body(homepage_file)
 		elif http.path.endswith('.ppd'):
 			http.send_headers(status='200 OK', content_type='text/plain')
@@ -63,7 +63,7 @@ class ThreadedTCPRequestHandler(socketserver.StreamRequestHandler):
 			http.send_body(BytesIO(ppd_file_text))
 		else:
 			http.send_headers(status='404 Not found', content_type='text/plain')
-			with open(local_file_location('404.txt'), 'r') as homepage_file:
+			with open(local_file_location('404.txt'), 'rb') as homepage_file:
 				http.send_body(homepage_file)
 
 
