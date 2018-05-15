@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import argparse
 import logging
-import sys, os
+import sys, os.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 if sys.version_info[0] < 3:
