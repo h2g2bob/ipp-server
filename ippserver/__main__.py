@@ -75,5 +75,8 @@ def main(args):
 		behaviour_from_args(args))
 	run_server(server)
 
-if __name__ == "__main__":
+def _init():
 	main(parse_args())
+
+if __name__ == "__main__":
+	_init()
