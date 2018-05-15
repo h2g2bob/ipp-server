@@ -12,12 +12,9 @@ import time
 import uuid
 
 from . import parsers
-from .constants import JobStateEnum
-from .constants import OperationEnum
-from .constants import StatusCodeEnum
+from .constants import JobStateEnum, OperationEnum, StatusCodeEnum, SectionEnum, TagEnum
 from .ppd import BasicPostscriptPPD, BasicPdfPPD
 from .request import IppRequest
-from .request import SectionEnum, TagEnum
 
 
 def get_job_id(req):
