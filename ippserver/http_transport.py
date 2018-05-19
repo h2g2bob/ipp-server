@@ -122,9 +122,9 @@ class HttpTransport(object):
 
 	def send_headers(self, status='200 OK', content_type='text/plain'):
 		self._wfile.write(b'\r\n'.join((
-			b'HTTP/1.1 ' + bytes(status, "utf-8"),
+			b'HTTP/1.1 ' + status.encode("utf-8"),
 			b'Server: ipp-server',
-			b'Content-Type: ' + bytes(content_type, "utf-8"),
+			b'Content-Type: ' + content_type.encode("utf-8"),
 			b'Connection: close',
 			b'',
 			b'')))
