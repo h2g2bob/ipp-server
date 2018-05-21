@@ -73,7 +73,8 @@ def behaviour_from_args(args):
 		return behaviour.RejectAllPrinter()
 	raise RuntimeError(args)
 
-def main(args):
+def main():
+	args = parse_args()
 	logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
 	server = ThreadedTCPServer(
@@ -82,8 +83,5 @@ def main(args):
 		behaviour_from_args(args))
 	run_server(server)
 
-def _init():
-	main(parse_args())
-
 if __name__ == "__main__":
-	_init()
+	main()

@@ -27,7 +27,7 @@ setup(
       install_requires=REQUIREMENTS,
       entry_points={
         'console_scripts': [
-            'ippserver = ippserver.__main__:_init',
+            'ippserver = ippserver.__main__:main',
         ]
     }
 )
