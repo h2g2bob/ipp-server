@@ -19,7 +19,7 @@ from .pc2paper import Pc2Paper
 from .server import run_server, ThreadedTCPServer, ThreadedTCPRequestHandler
 
 
-def parse_args():
+def parse_args(args=None):
 	pdf_help = 'Request that CUPs sends the document as a PDF file, instead of a PS file. CUPs detects this setting when ADDING a printer: you may need to re-add the printer on a different port'
 
 	parser = argparse.ArgumentParser(description='An IPP server')
@@ -48,9 +48,9 @@ def parse_args():
 	parser_command.add_argument('--pdf', action='store_true', default=False, help=pdf_help)
 	parser_command.add_argument('--config', metavar='CONFIG', help='File containging an address to send to, in json format')
 
-	return parser.parse_args()
+	return parser.parse_args(args)
 
-def behaviour_from_args(args):
+def behaviour_from_parsed_args(args):
 	if args.action == 'save':
 		return behaviour.SaveFilePrinter(
 			directory=args.directory,
@@ -73,14 +73,14 @@ def behaviour_from_args(args):
 		return behaviour.RejectAllPrinter()
 	raise RuntimeError(args)
 
-def main():
-	args = parse_args()
-	logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+def main(args=None):
+	parsed_args = parse_args(args)
+	logging.basicConfig(level=logging.DEBUG if parsed_args.verbose else logging.INFO)
 
 	server = ThreadedTCPServer(
-		(args.host, args.port),
+		(parsed_args.host, parsed_args.port),
 		ThreadedTCPRequestHandler,
-		behaviour_from_args(args))
+		behaviour_from_parsed_args(parsed_args))
 	run_server(server)
 
 if __name__ == "__main__":
