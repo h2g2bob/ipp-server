@@ -6,10 +6,10 @@ from __future__ import unicode_literals
 import json
 import logging
 import requests
-from recordclass import recordclass
+from collections import namedtuple
 
 
-class Pc2Paper(recordclass('Pc2Paper',
+class Pc2Paper(namedtuple('Pc2Paper',
 		('username', 'password', 'name', 'address1', 'address2', 'address3', 'address4', 'postcode', 'country', 'postage', 'paper', 'envelope', 'extras'))):
 	# From https://www.pc2paper.co.uk/downloads/country.csv
 	NUMERIC_COUNTRY_CODES = {
@@ -69,7 +69,7 @@ class Pc2Paper(recordclass('Pc2Paper',
 			headers={'Content-type': 'application/json'},
 			data=json.dumps(post_data))
 		response_data = response.json()
-		logging.info('Response to uploading %r is %r', filename, response_data)
+		logging.debug('Response to uploading %r is %r', filename, response_data)
 		error_messages = response_data['d']['ErrorMessages']
 		if error_messages:
 			raise ValueError(error_messages)
@@ -103,7 +103,7 @@ class Pc2Paper(recordclass('Pc2Paper',
 			headers={'Content-type': 'application/json'},
 			data=json.dumps(post_data))
 
-		logging.info('Response to posting %r is %r', pdf_guid, response_data)
+		logging.debug('Response to posting %r is %r', pdf_guid, response_data)
 		error_messages = response_data['d']['ErrorMessages']
 		if error_messages:
 			raise ValueError(error_messages)
