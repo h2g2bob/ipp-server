@@ -9,49 +9,7 @@ import operator
 import itertools
 
 from .parsers import read_struct, write_struct
-
-class SectionEnum(object):
-	# delimiters (sections)
-	SECTIONS              = 0x00
-	SECTIONS_MASK         = 0xf0
-	operation   = 0x01
-	job         = 0x02
-	END         = 0x03
-	printer     = 0x04
-	unsupported = 0x05
-
-	@classmethod
-	def is_section_tag(cls, tag):
-		return (tag & cls.SECTIONS_MASK) == cls.SECTIONS
-
-
-class TagEnum(object):
-	unsupported_value     = 0x10
-	unknown_value         = 0x12
-	no_value              = 0x13
-
-	# int types
-	integer               = 0x21
-	boolean               = 0x22
-	enum                  = 0x23
-
-	# string types
-	octet_str             = 0x30
-	datetime_str          = 0x31
-	resolution            = 0x32
-	range_of_integer      = 0x33
-	text_with_language    = 0x35
-	name_with_language    = 0x36
-
-	text_without_language = 0x41
-	name_without_language = 0x42
-	keyword               = 0x44
-	uri                   = 0x45
-	uri_scheme            = 0x46
-	charset               = 0x47
-	natural_language      = 0x48
-	mime_media_type       = 0x49
-
+from .constants import SectionEnum, TagEnum
 
 class IppRequest(object):
 	def __init__(self, version, opid_or_status, request_id, attributes):
@@ -136,6 +94,16 @@ class IppRequest(object):
 					write_struct(f, b'>h', len(value))
 					f.write(value)
 		write_struct(f, b'>B', SectionEnum.END)
+
+	def attributes_to_multilevel(self, section=None):
+		ret = {}
+		for key in self._attributes.keys():
+			if section and section != key[0]:
+				continue
+			ret.setdefault(key[0], {})
+			ret[key[0]].setdefault(key[1], {})
+			ret[key[0]][key[1]][key[2]] = self._attributes[key]
+		return ret
 
 	def lookup(self, section, name, tag):
 		return self._attributes[section, name, tag]
