@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from cStringIO import StringIO
+from io import BytesIO
 import logging
 import operator
 import itertools
@@ -61,7 +61,10 @@ class IppRequest(object):
 		self._attributes = attributes
 
 	def __cmp__(self, other):
-		return cmp(type(self), type(other)) or cmp(self._attributes, other._attributes)
+		return self.__eq__(other)
+
+	def __eq__(self, other):
+		return type(self) == type(other) or self._attributes == other._attributes
 
 	def __repr__(self):
 		return 'IppRequest(%r, 0x%04x, 0x%02x, %r)' % (
@@ -72,7 +75,7 @@ class IppRequest(object):
 
 	@classmethod
 	def from_string(cls, string):
-		return cls.from_file(StringIO(string))
+		return cls.from_file(BytesIO(string))
 
 	@classmethod
 	def from_file(cls, f):
@@ -109,9 +112,9 @@ class IppRequest(object):
 				attributes.setdefault((current_section, current_name, tag), []).append(value_str)
 
 		return cls(version, operation_id_or_status_code, request_id, attributes)
-		
+
 	def to_string(self):
-		sio = StringIO()
+		sio = BytesIO()
 		self.to_file(sio)
 		return sio.getvalue()
 

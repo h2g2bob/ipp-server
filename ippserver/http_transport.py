@@ -11,12 +11,13 @@ import logging
 class ConnectionClosedError(Exception):
 	pass
 
+_parse_http = re.compile(br'^(GET|POST) (/[^ ]*) HTTP/')
 
 def _process_status(f):
 	first_line = f.readline()
 	if first_line == b'':
 		raise ConnectionClosedError('While reading status line')
-	m = re.compile(br'^(GET|POST) (/[^ ]*) HTTP/').search(first_line)
+	m = _parse_http.search(first_line)
 	if m is None:
 		raise ValueError('Invalid request: %r' % (first_line,))
 	return m.groups()
@@ -121,9 +122,9 @@ class HttpTransport(object):
 
 	def send_headers(self, status='200 OK', content_type='text/plain'):
 		self._wfile.write(b'\r\n'.join((
-			b'HTTP/1.1 ' + status,
+			b'HTTP/1.1 ' + status.encode("utf-8"),
 			b'Server: ipp-server',
-			b'Content-Type: ' + content_type,
+			b'Content-Type: ' + content_type.encode("utf-8"),
 			b'Connection: close',
 			b'',
 			b'')))
@@ -139,4 +140,3 @@ class HttpTransport(object):
 
 	def close(self):
 		self._wfile.close()
-

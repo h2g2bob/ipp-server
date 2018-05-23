@@ -47,7 +47,7 @@ class Behaviour(object):
 
 	def handle_ipp(self, ipp_request, postscript_file):
 		command_function = self.get_handle_command_function(ipp_request.opid_or_status)
-		logging.info('IPP %r -> %r', ipp_request.opid_or_status, command_function)
+		logging.debug('IPP %r -> %r', ipp_request.opid_or_status, command_function)
 		return command_function(ipp_request, postscript_file)
 
 	def get_handle_command_function(self, opid_or_status):
@@ -196,7 +196,7 @@ class StatelessPrinter(Behaviour):
 			(SectionEnum.printer, b'document-format-default', TagEnum.mime_media_type) : [b'application/pdf'],
 			(SectionEnum.printer, b'document-format-supported', TagEnum.mime_media_type) : [b'application/pdf'],
 			(SectionEnum.printer, b'printer-is-accepting-jobs', TagEnum.boolean) : [parsers.Boolean(True).bytes()],
-			(SectionEnum.printer, b'queued-job-count', TagEnum.integer) : [parsers.Integer(0).bytes()],
+			(SectionEnum.printer, b'queued-job-count', TagEnum.integer) : [b'\x00'],
 			(SectionEnum.printer, b'pdl-override-supported', TagEnum.keyword) : [b'not-attempted'],
 			(SectionEnum.printer, b'printer-up-time', TagEnum.integer) : [parsers.Integer(self.printer_uptime()).bytes()],
 			(SectionEnum.printer, b'compression-supported', TagEnum.keyword) : [b'none'],
@@ -206,25 +206,24 @@ class StatelessPrinter(Behaviour):
 
 	def print_job_attributes(self, job_id, state, state_reasons):
 		# state reasons come from rfc2911 section 4.3.8
-
-		job_uri = b'%sjob/%s' % (self.base_uri, job_id,)
+		job_uri = b'%sjob/%i' % (self.base_uri, job_id)
 
 		attr = {
 			# Required for print-job:
 
 			(SectionEnum.operation, b'job-uri', TagEnum.uri): [job_uri],
-			(SectionEnum.operation, b'job-id', TagEnum.integer): [parsers.Integer(int(job_id)).bytes()],
+			(SectionEnum.operation, b'job-id', TagEnum.integer): [parsers.Integer(job_id).bytes()],
 			(SectionEnum.operation, b'job-state', TagEnum.enum): [parsers.Enum(state).bytes()],
 			(SectionEnum.operation, b'job-state-reasons', TagEnum.keyword): state_reasons,
 
 			# Required for get-job-attributes:
 
 			(SectionEnum.operation, b'job-printer-uri', TagEnum.uri): [self.printer_uri],
-			(SectionEnum.operation, b'job-name', TagEnum.name_without_language) : [b'Print job %s' % (job_id,)],
+			(SectionEnum.operation, b'job-name', TagEnum.name_without_language) : [b'Print job %i' % job_id],
 			(SectionEnum.operation, b'job-originating-user-name', TagEnum.name_without_language) : [b'job-originating-user-name'],
-			(SectionEnum.operation, b'time-at-creation', TagEnum.integer) : [parsers.Integer(int(0)).bytes()],
-			(SectionEnum.operation, b'time-at-processing', TagEnum.integer) : [parsers.Integer(int(0)).bytes()],
-			(SectionEnum.operation, b'time-at-completed', TagEnum.integer) : [parsers.Integer(int(0)).bytes()],
+			(SectionEnum.operation, b'time-at-creation', TagEnum.integer) : [b'\x00'],
+			(SectionEnum.operation, b'time-at-processing', TagEnum.integer) : [b'\x00'],
+			(SectionEnum.operation, b'time-at-completed', TagEnum.integer) : [b'\x00'],
 			(SectionEnum.operation, b'job-printer-up-time', TagEnum.integer) : [parsers.Integer(self.printer_uptime()).bytes()],
 
 		}
