@@ -8,18 +8,16 @@ try:
 except ImportError:
     Enum = object
 
-import logging
-
 
 class SectionEnum(Enum):
     # delimiters (sections)
-    SECTIONS              = 0x00
-    SECTIONS_MASK         = 0xf0
-    operation   = 0x01
-    job         = 0x02
-    END         = 0x03
-    printer     = 0x04
-    unsupported = 0x05
+    SECTIONS      = 0x00
+    SECTIONS_MASK = 0xf0
+    operation     = 0x01
+    job           = 0x02
+    END           = 0x03
+    printer       = 0x04
+    unsupported   = 0x05
 
     @classmethod
     def is_section_tag(cls, tag):
@@ -58,7 +56,7 @@ class StatusCodeEnum(Enum):
     # https://tools.ietf.org/html/rfc2911#section-13.1
     ok = 0x0000
     server_error_internal_error = 0x0500
-    server_error_operation_not_supported =     0x0501
+    server_error_operation_not_supported = 0x0501
     server_error_job_canceled = 0x508
 
 
@@ -76,6 +74,7 @@ class OperationEnum(Enum):
     # https://web.archive.org/web/20061024184939/http://uw714doc.sco.com/en/cups/ipp.html
     cups_get_default = 0x4001
     cups_list_all_printers = 0x4002
+
 
 class JobStateEnum(Enum):
     # https://tools.ietf.org/html/rfc2911#section-4.3.7
