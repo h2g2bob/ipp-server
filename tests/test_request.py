@@ -34,7 +34,7 @@ class TestIppRequest(unittest.TestCase):
 		msg = IppRequest.from_string(self.printer_discovery)
 		self.assertRaises(KeyError, msg.only, SectionEnum.operation, b'no-exist', TagEnum.charset)
 
-	def test_attr_only_noexist(self):
+	def test_attr_lookup_noexist(self):
 		msg = IppRequest.from_string(self.printer_discovery)
 		self.assertRaises(KeyError, msg.lookup, SectionEnum.operation, b'no-exist', TagEnum.charset)
 

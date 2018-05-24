@@ -67,7 +67,7 @@ class OperationEnum(Enum):
 	print_job = 0x0002
 	validate_job = 0x0004
 	cancel_job = 0x0008
-	get_job_attrbutes = 0x0009
+	get_job_attributes = 0x0009
 	get_jobs = 0x000a
 	get_printer_attributes = 0x000b
 

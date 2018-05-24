@@ -87,7 +87,7 @@ class StatelessPrinter(Behaviour):
 			OperationEnum.cups_get_default: self.operation_printer_list_response,
 			OperationEnum.validate_job: self.operation_validate_job_response,
 			OperationEnum.get_jobs: self.operation_get_jobs_response,
-			OperationEnum.get_job_attrbutes: self.operation_get_job_attributes_response,
+			OperationEnum.get_job_attributes: self.operation_get_job_attributes_response,
 			OperationEnum.print_job: self.operation_print_job_response,
 			0x0d0a: self.operation_misidentified_as_http,
 		}
@@ -189,7 +189,7 @@ class StatelessPrinter(Behaviour):
 					OperationEnum.print_job,  # (required by cups)
 					OperationEnum.validate_job,  # (required by cups)
 					OperationEnum.cancel_job,  # (required by cups)
-					OperationEnum.get_job_attrbutes,  # (required by cups)
+					OperationEnum.get_job_attributes,  # (required by cups)
 					OperationEnum.get_printer_attributes,
 				)],
 			(SectionEnum.printer, b'multiple-document-jobs-supported', TagEnum.boolean) : [parsers.Boolean(False).bytes()],
