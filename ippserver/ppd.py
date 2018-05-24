@@ -4,16 +4,16 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 class PPD(object):
-	def text(self):
-		raise NotImplementedError()
+    def text(self):
+        raise NotImplementedError()
 
 class BasicPostscriptPPD(PPD):
-	product='ipp-server'
-	manufacturer='h2g2bob'
-	model='ipp-server-postscript'
+    product='ipp-server'
+    manufacturer='h2g2bob'
+    model='ipp-server-postscript'
 
-	def text(self):
-		return b'''*PPD-Adobe: "4.3"
+    def text(self):
+        return b'''*PPD-Adobe: "4.3"
 
 *% This is a minimal config file
 *% and is almost certainly missing lots of features
@@ -50,10 +50,10 @@ class BasicPostscriptPPD(PPD):
 '''.format(product=self.product, manufacturer=self.manufacturer, model=self.model, ppdfilename=self.model + '.ppd')
 
 class BasicPdfPPD(BasicPostscriptPPD):
-	model='ipp-server-pdf'
+    model='ipp-server-pdf'
 
-	def text(self):
-		return super(BasicPdfPPD, self).text() + b'''
+    def text(self):
+        return super(BasicPdfPPD, self).text() + b'''
 *% The printer can only handle PDF files, so get CUPS to send that
 *% https://en.wikipedia.org/wiki/CUPS#Filter_system
 *% https://www.cups.org/doc/spec-ppd.html
