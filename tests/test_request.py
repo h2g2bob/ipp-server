@@ -83,6 +83,7 @@ class TestPrintTestPage(unittest.TestCase):
         req = IppRequest.from_file(http_transport.recv_body())
         self.assertEqual(req.opid_or_status, OperationEnum.print_job)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     logging.getLogger().setLevel(logging.DEBUG)
     unittest.main()

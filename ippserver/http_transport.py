@@ -11,7 +11,9 @@ import logging
 class ConnectionClosedError(Exception):
     pass
 
+
 _parse_http = re.compile(br'^(GET|POST) (/[^ ]*) HTTP/')
+
 
 def _process_status(f):
     first_line = f.readline()
