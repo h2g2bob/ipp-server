@@ -38,9 +38,9 @@ def prepare_environment(ipp_request):
 
 class Behaviour(object):
     """Do anything in response to IPP requests"""
-    version=(1, 1)
-    base_uri=b'ipp://localhost:1234/'
-    printer_uri=b'ipp://localhost:1234/printer'
+    version = (1, 1)
+    base_uri = b'ipp://localhost:1234/'
+    printer_uri = b'ipp://localhost:1234/printer'
 
     def __init__(self, ppd=BasicPostscriptPPD()):
         self.ppd = ppd
@@ -96,7 +96,7 @@ class StatelessPrinter(Behaviour):
             command_function = commands[opid_or_status]
         except KeyError:
             logging.warn('Operation not supported 0x%04x', opid_or_status)
-            command_function = operation_not_implemented_response
+            command_function = self.operation_not_implemented_response
         return command_function
 
 
@@ -330,7 +330,7 @@ class SaveAndRunPrinter(SaveFilePrinter):
         proc = subprocess.Popen(self.command + [filename], env=prepare_environment(ipp_request) if self.use_env else None)
         proc.communicate()
         if proc.returncode:
-            raise Exception('The command %r exited with code %r', command, proc.returncode)
+            raise Exception('The command %r exited with code %r', self.command, proc.returncode)
 
 
 class RunCommandPrinter(StatelessPrinter):
@@ -345,7 +345,7 @@ class RunCommandPrinter(StatelessPrinter):
 
         super(RunCommandPrinter, self).__init__(ppd=ppd)
 
-    def handle_postscript(self, _ipp_request, postscript_file):
+    def handle_postscript(self, ipp_request, postscript_file):
         logging.info('Running command for job')
         proc = subprocess.Popen(
             self.command, env=prepare_environment(ipp_request) if self.use_env else None,
@@ -353,7 +353,7 @@ class RunCommandPrinter(StatelessPrinter):
         data = b''.join(read_in_blocks(postscript_file))
         proc.communicate(data)
         if proc.returncode:
-            raise Exception('The command %r exited with code %r', command, proc.returncode)
+            raise Exception('The command %r exited with code %r', self.command, proc.returncode)
 
 
 class PostageServicePrinter(StatelessPrinter):

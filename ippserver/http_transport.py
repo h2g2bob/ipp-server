@@ -13,8 +13,6 @@ class ConnectionClosedError(Exception):
 
 
 _parse_http = re.compile(br'^(GET|POST) (/[^ ]*) HTTP/')
-
-
 def _process_status(f):
     first_line = f.readline()
     if first_line == b'':
