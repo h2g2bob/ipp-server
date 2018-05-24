@@ -4,12 +4,12 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 try:
-    from enum import Enum
+    from enum import IntEnum
 except ImportError:
-    Enum = object
+    IntEnum = object
 
 
-class SectionEnum(Enum):
+class SectionEnum(IntEnum):
     # delimiters (sections)
     SECTIONS      = 0x00
     SECTIONS_MASK = 0xf0
@@ -24,7 +24,7 @@ class SectionEnum(Enum):
         return (tag & cls.SECTIONS_MASK) == cls.SECTIONS
 
 
-class TagEnum(Enum):
+class TagEnum(IntEnum):
     unsupported_value     = 0x10
     unknown_value         = 0x12
     no_value              = 0x13
@@ -52,7 +52,7 @@ class TagEnum(Enum):
     mime_media_type       = 0x49
 
 
-class StatusCodeEnum(Enum):
+class StatusCodeEnum(IntEnum):
     # https://tools.ietf.org/html/rfc2911#section-13.1
     ok = 0x0000
     server_error_internal_error = 0x0500
@@ -60,7 +60,7 @@ class StatusCodeEnum(Enum):
     server_error_job_canceled = 0x508
 
 
-class OperationEnum(Enum):
+class OperationEnum(IntEnum):
     # https://tools.ietf.org/html/rfc2911#section-4.4.15
     print_job = 0x0002
     validate_job = 0x0004
@@ -76,7 +76,7 @@ class OperationEnum(Enum):
     cups_list_all_printers = 0x4002
 
 
-class JobStateEnum(Enum):
+class JobStateEnum(IntEnum):
     # https://tools.ietf.org/html/rfc2911#section-4.3.7
     pending = 3
     pending_held = 4
