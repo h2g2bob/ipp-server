@@ -8,8 +8,8 @@ import sys, os.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ippserver.http_transport import HttpTransport
-from ippserver.constants import OperationEnum
-from ippserver.request import IppRequest, TagEnum, SectionEnum
+from ippserver.constants import OperationEnum, TagEnum, SectionEnum
+from ippserver.request import IppRequest
 
 from io import BytesIO
 import logging
