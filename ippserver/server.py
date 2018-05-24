@@ -4,7 +4,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from io import BytesIO
-import socket
 import threading
 try:
     import socketserver
@@ -88,12 +87,14 @@ class ThreadedTCPServer(socketserver.ThreadingTCPServer):
         self.behaviour = behaviour
         socketserver.ThreadingTCPServer.__init__(self, address, request_handler)  # old style class!
 
+
 def wait_until_ctrl_c():
     try:
         while True:
             time.sleep(300)
     except KeyboardInterrupt:
         return
+
 
 def run_server(server):
     logging.info('Listening on %r', server.server_address)

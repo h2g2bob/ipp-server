@@ -102,6 +102,7 @@ class Pc2Paper(namedtuple('Pc2Paper',
             'https://www.pc2paper.co.uk/lettercustomerapi.svc/json/SendSubmitLetterForPosting',
             headers={'Content-type': 'application/json'},
             data=json.dumps(post_data))
+        response_data = response.json()
 
         logging.debug('Response to posting %r is %r', pdf_guid, response_data)
         error_messages = response_data['d']['ErrorMessages']

@@ -4,16 +4,16 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from io import BytesIO
-import logging
 import operator
 import itertools
 
 from .parsers import read_struct, write_struct
-from .constants import SectionEnum, TagEnum
+from .constants import SectionEnum
+
 
 class IppRequest(object):
     def __init__(self, version, opid_or_status, request_id, attributes):
-        self.version = version # (major, minor)
+        self.version = version  # (major, minor)
         self.opid_or_status = opid_or_status
         self.request_id = request_id
         self._attributes = attributes

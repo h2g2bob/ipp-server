@@ -48,7 +48,6 @@ class Behaviour(object):
     def expect_page_data_follows(self, ipp_request):
         return ipp_request.opid_or_status == OperationEnum.print_job
 
-
     def handle_ipp(self, ipp_request, postscript_file):
         command_function = self.get_handle_command_function(ipp_request.opid_or_status)
         logging.debug('IPP %r -> %r', ipp_request.opid_or_status, command_function)
@@ -56,6 +55,7 @@ class Behaviour(object):
 
     def get_handle_command_function(self, opid_or_status):
         raise NotImplementedError()
+
 
 class AllCommandsReturnNotImplemented(Behaviour):
     """A printer which responds to all commands with a not implemented error.
@@ -72,6 +72,7 @@ class AllCommandsReturnNotImplemented(Behaviour):
             StatusCodeEnum.server_error_operation_not_supported,
             req.request_id,
             attributes)
+
 
 class StatelessPrinter(Behaviour):
     """A minimal printer which implements all the things a printer needs to work.
@@ -98,7 +99,6 @@ class StatelessPrinter(Behaviour):
             logging.warn('Operation not supported 0x%04x', opid_or_status)
             command_function = self.operation_not_implemented_response
         return command_function
-
 
     def operation_not_implemented_response(self, req, _psfile):
         attributes = self.minimal_attributes()
@@ -167,23 +167,23 @@ class StatelessPrinter(Behaviour):
             # This list comes from
             # https://tools.ietf.org/html/rfc2911
             # Section 3.1.4.2 Response Operation Attributes
-            (SectionEnum.operation, b'attributes-charset', TagEnum.charset) : [b'utf-8'],
-            (SectionEnum.operation, b'attributes-natural-language', TagEnum.natural_language) : [b'en'],
+            (SectionEnum.operation, b'attributes-charset', TagEnum.charset): [b'utf-8'],
+            (SectionEnum.operation, b'attributes-natural-language', TagEnum.natural_language): [b'en'],
         }
 
     def printer_list_attributes(self):
         attr = {
             # rfc2911 section 4.4
-            (SectionEnum.printer, b'printer-uri-supported', TagEnum.uri) : [self.printer_uri],
-            (SectionEnum.printer, b'uri-authentication-supported', TagEnum.keyword) : [b'none'],
-            (SectionEnum.printer, b'uri-security-supported', TagEnum.keyword) : [b'none'],
-            (SectionEnum.printer, b'printer-name', TagEnum.name_without_language) : [b'ipp-printer.py'],
-            (SectionEnum.printer, b'printer-info', TagEnum.text_without_language) : [b'Printer using ipp-printer.py'],
-            (SectionEnum.printer, b'printer-make-and-model', TagEnum.text_without_language) : [b'h2g2bob\'s ipp-printer.py 0.00'],
-            (SectionEnum.printer, b'printer-state', TagEnum.enum) : [parsers.Enum(3).bytes()], # XXX 3 is idle
-            (SectionEnum.printer, b'printer-state-reasons', TagEnum.keyword) : [b'none'],
-            (SectionEnum.printer, b'ipp-versions-supported', TagEnum.keyword) : [b'1.1'],
-            (SectionEnum.printer, b'operations-supported', TagEnum.enum) : [
+            (SectionEnum.printer, b'printer-uri-supported', TagEnum.uri): [self.printer_uri],
+            (SectionEnum.printer, b'uri-authentication-supported', TagEnum.keyword): [b'none'],
+            (SectionEnum.printer, b'uri-security-supported', TagEnum.keyword): [b'none'],
+            (SectionEnum.printer, b'printer-name', TagEnum.name_without_language): [b'ipp-printer.py'],
+            (SectionEnum.printer, b'printer-info', TagEnum.text_without_language): [b'Printer using ipp-printer.py'],
+            (SectionEnum.printer, b'printer-make-and-model', TagEnum.text_without_language): [b'h2g2bob\'s ipp-printer.py 0.00'],
+            (SectionEnum.printer, b'printer-state', TagEnum.enum): [parsers.Enum(3).bytes()], # XXX 3 is idle
+            (SectionEnum.printer, b'printer-state-reasons', TagEnum.keyword): [b'none'],
+            (SectionEnum.printer, b'ipp-versions-supported', TagEnum.keyword): [b'1.1'],
+            (SectionEnum.printer, b'operations-supported', TagEnum.enum): [
                 parsers.Enum(x).bytes()
                 for x in (
                     OperationEnum.print_job,  # (required by cups)
@@ -192,18 +192,18 @@ class StatelessPrinter(Behaviour):
                     OperationEnum.get_job_attributes,  # (required by cups)
                     OperationEnum.get_printer_attributes,
                 )],
-            (SectionEnum.printer, b'multiple-document-jobs-supported', TagEnum.boolean) : [parsers.Boolean(False).bytes()],
-            (SectionEnum.printer, b'charset-configured', TagEnum.charset) : [b'utf-8'],
-            (SectionEnum.printer, b'charset-supported', TagEnum.charset) : [b'utf-8'],
-            (SectionEnum.printer, b'natural-language-configured', TagEnum.natural_language) : [b'en'],
-            (SectionEnum.printer, b'generated-natural-language-supported', TagEnum.natural_language) : [b'en'],
-            (SectionEnum.printer, b'document-format-default', TagEnum.mime_media_type) : [b'application/pdf'],
-            (SectionEnum.printer, b'document-format-supported', TagEnum.mime_media_type) : [b'application/pdf'],
-            (SectionEnum.printer, b'printer-is-accepting-jobs', TagEnum.boolean) : [parsers.Boolean(True).bytes()],
-            (SectionEnum.printer, b'queued-job-count', TagEnum.integer) : [b'\x00'],
-            (SectionEnum.printer, b'pdl-override-supported', TagEnum.keyword) : [b'not-attempted'],
-            (SectionEnum.printer, b'printer-up-time', TagEnum.integer) : [parsers.Integer(self.printer_uptime()).bytes()],
-            (SectionEnum.printer, b'compression-supported', TagEnum.keyword) : [b'none'],
+            (SectionEnum.printer, b'multiple-document-jobs-supported', TagEnum.boolean): [parsers.Boolean(False).bytes()],
+            (SectionEnum.printer, b'charset-configured', TagEnum.charset): [b'utf-8'],
+            (SectionEnum.printer, b'charset-supported', TagEnum.charset): [b'utf-8'],
+            (SectionEnum.printer, b'natural-language-configured', TagEnum.natural_language): [b'en'],
+            (SectionEnum.printer, b'generated-natural-language-supported', TagEnum.natural_language): [b'en'],
+            (SectionEnum.printer, b'document-format-default', TagEnum.mime_media_type): [b'application/pdf'],
+            (SectionEnum.printer, b'document-format-supported', TagEnum.mime_media_type): [b'application/pdf'],
+            (SectionEnum.printer, b'printer-is-accepting-jobs', TagEnum.boolean): [parsers.Boolean(True).bytes()],
+            (SectionEnum.printer, b'queued-job-count', TagEnum.integer): [b'\x00'],
+            (SectionEnum.printer, b'pdl-override-supported', TagEnum.keyword): [b'not-attempted'],
+            (SectionEnum.printer, b'printer-up-time', TagEnum.integer): [parsers.Integer(self.printer_uptime()).bytes()],
+            (SectionEnum.printer, b'compression-supported', TagEnum.keyword): [b'none'],
         }
         attr.update(self.minimal_attributes())
         return attr
@@ -223,12 +223,12 @@ class StatelessPrinter(Behaviour):
             # Required for get-job-attributes:
 
             (SectionEnum.operation, b'job-printer-uri', TagEnum.uri): [self.printer_uri],
-            (SectionEnum.operation, b'job-name', TagEnum.name_without_language) : [b'Print job %i' % job_id],
-            (SectionEnum.operation, b'job-originating-user-name', TagEnum.name_without_language) : [b'job-originating-user-name'],
-            (SectionEnum.operation, b'time-at-creation', TagEnum.integer) : [b'\x00'],
-            (SectionEnum.operation, b'time-at-processing', TagEnum.integer) : [b'\x00'],
-            (SectionEnum.operation, b'time-at-completed', TagEnum.integer) : [b'\x00'],
-            (SectionEnum.operation, b'job-printer-up-time', TagEnum.integer) : [parsers.Integer(self.printer_uptime()).bytes()],
+            (SectionEnum.operation, b'job-name', TagEnum.name_without_language)  [b'Print job %i' % job_id],
+            (SectionEnum.operation, b'job-originating-user-name', TagEnum.name_without_language): [b'job-originating-user-name'],
+            (SectionEnum.operation, b'time-at-creation', TagEnum.integer): [b'\x00'],
+            (SectionEnum.operation, b'time-at-processing', TagEnum.integer): [b'\x00'],
+            (SectionEnum.operation, b'time-at-completed', TagEnum.integer): [b'\x00'],
+            (SectionEnum.operation, b'job-printer-up-time', TagEnum.integer): [parsers.Integer(self.printer_uptime()).bytes()],
 
         }
         attr.update(self.minimal_attributes())
