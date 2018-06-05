@@ -223,7 +223,7 @@ class StatelessPrinter(Behaviour):
             # Required for get-job-attributes:
 
             (SectionEnum.operation, b'job-printer-uri', TagEnum.uri): [self.printer_uri],
-            (SectionEnum.operation, b'job-name', TagEnum.name_without_language)  [b'Print job %i' % job_id],
+            (SectionEnum.operation, b'job-name', TagEnum.name_without_language): [b'Print job %i' % job_id],
             (SectionEnum.operation, b'job-originating-user-name', TagEnum.name_without_language): [b'job-originating-user-name'],
             (SectionEnum.operation, b'time-at-creation', TagEnum.integer): [b'\x00'],
             (SectionEnum.operation, b'time-at-processing', TagEnum.integer): [b'\x00'],
