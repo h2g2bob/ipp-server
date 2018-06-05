@@ -1,7 +1,6 @@
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
-from __future__ import unicode_literals
 
 from io import BytesIO
 import threading
@@ -60,7 +59,7 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
     default_request_version = "HTTP/1.1"
 
     def parse_request(self):
-        ret = super(IPPRequestHandler, self).parse_request()
+        ret = BaseHTTPRequestHandler.parse_request(self)
         if 'chunked' in self.headers.get('transfer-encoding', ''):
             r = read_chunked(self.rfile)
             self.rfile.close()
@@ -68,11 +67,27 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
         self.close_connection = True
         return ret
 
+    if not hasattr(BaseHTTPRequestHandler, "send_response_only"):
+        def send_response_only(self, code, message=None):
+            """Send the response header only."""
+            if message is None:
+                if code in self.responses:
+                    message = self.responses[code][0]
+                else:
+                    message = ''
+            if not hasattr(self, '_headers_buffer'):
+                self._headers_buffer = []
+            self._headers_buffer.append(
+                (
+                    "%s %d %s\r\n" % (self.protocol_version, code, message)
+                ).encode('latin-1', 'strict')
+            )
+
     def send_headers(self, status=200, content_type='text/plain'):
         self.log_request(status)
         self.send_response_only(status, None)
         self.send_header('Server', 'ipp-server')
-        # self.send_header('Date', self.date_time_string())
+        self.send_header('Date', self.date_time_string())
         self.send_header('ContentType', content_type)
         self.send_header('Connection', 'close')
         self.end_headers()

@@ -1,7 +1,6 @@
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
-from __future__ import unicode_literals
 
 import argparse
 import logging
@@ -9,10 +8,7 @@ import importlib
 import sys, os.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-if sys.version_info[0] < 3:
-    __package__ = b"ippserver"
-else:
-    __package__ = "ippserver"
+__package__ = "ippserver"
 
 
 from . import behaviour
