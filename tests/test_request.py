@@ -7,7 +7,6 @@ from __future__ import unicode_literals
 import sys, os.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ippserver.http_transport import HttpTransport
 from ippserver.server import IPPRequestHandler
 from ippserver.constants import OperationEnum, TagEnum, SectionEnum
 from ippserver.request import IppRequest

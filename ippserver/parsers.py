@@ -12,7 +12,7 @@ def read_struct(f, fmt):
     return struct.unpack(fmt, string)
 
 
-def write_struct(f, fmt, *args, verify_size=None):
+def write_struct(f, fmt, *args):
     data = struct.pack(fmt, *args)
     f.write(data)
 
