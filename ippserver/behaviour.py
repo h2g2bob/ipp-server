@@ -171,9 +171,8 @@ class StatelessPrinter(Behaviour):
         # Should have all these attributes:
         # https://tools.ietf.org/html/rfc2911#section-4.3
 
-        job_id = get_job_id(req)
         attributes = self.print_job_attributes(
-            job_id,
+            get_job_id(req),
             JobStateEnum.completed,
             [b'none']
         )
@@ -308,7 +307,7 @@ class StatelessPrinter(Behaviour):
                 SectionEnum.printer,
                 b'queued-job-count',
                 TagEnum.integer
-            ): [b'\x00'],
+            ): [b'\x00\x00\x00\x00'],
             (
                 SectionEnum.printer,
                 b'pdl-override-supported',
@@ -330,7 +329,7 @@ class StatelessPrinter(Behaviour):
 
     def print_job_attributes(self, job_id, state, state_reasons):
         # state reasons come from rfc2911 section 4.3.8
-        job_uri = b'%sjob/%s' % (self.base_uri, Integer(job_id))
+        job_uri = b'%sjob/%s' % (self.base_uri, Integer(job_id).bytes())
         attr = {
             # Required for print-job:
             (
@@ -375,17 +374,17 @@ class StatelessPrinter(Behaviour):
                 SectionEnum.operation,
                 b'time-at-creation',
                 TagEnum.integer
-            ): [b'\x00'],
+            ): [b'\x00\x00\x00\x00'],
             (
                 SectionEnum.operation,
                 b'time-at-processing',
                 TagEnum.integer
-            ): [b'\x00'],
+            ): [b'\x00\x00\x00\x00'],
             (
                 SectionEnum.operation,
                 b'time-at-completed',
                 TagEnum.integer
-            ): [b'\x00'],
+            ): [b'\x00\x00\x00\x00'],
             (
                 SectionEnum.operation,
                 b'job-printer-up-time',
@@ -404,8 +403,7 @@ class StatelessPrinter(Behaviour):
         The StatelessPrinter does not care about the id, but perhaps
         it can be subclassed into something that keeps track of jobs.
         """
-        job_id = random.randint(1,9999)
-        return job_id
+        return random.randint(1,9999)
 
     def handle_postscript(self, ipp_request, postscript_file):
         raise NotImplementedError
