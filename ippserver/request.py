@@ -80,7 +80,9 @@ class IppRequest(object):
         version_major, version_minor = 1, 1
         write_struct(f, b'>bb', version_major, version_minor)
         write_struct(f, b'>hi', self.opid_or_status, self.request_id)
-        for section, attrs_in_section in itertools.groupby(sorted(self._attributes.keys()), operator.itemgetter(0)):
+        for section, attrs_in_section in itertools.groupby(
+            sorted(self._attributes.keys()), operator.itemgetter(0)
+        ):
             write_struct(f, b'>B', section)
             for key in attrs_in_section:
                 _section, name, tag = key

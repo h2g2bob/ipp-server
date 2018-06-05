@@ -96,7 +96,7 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Date', self.date_time_string())
         self.send_header('Content-Type', content_type)
         if content_length:
-            self.send_header('Content-Length', '%i' % content_length)
+            self.send_header('Content-Length', '%u' % content_length)
         self.send_header('Connection', 'close')
         self.end_headers()
 
