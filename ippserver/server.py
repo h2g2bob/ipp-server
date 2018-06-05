@@ -102,13 +102,16 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         self.handle_ipp()
 
+    def do_GET(self):
+        self.handle_www()
+
     def handle_www(self):
         if self.path == '/':
             self.send_headers(
                 status=200, content_type='text/plain'
             )
-            with open(local_file_location('homepage.txt'), 'rb') as homepage_file:
-                self.wfile.write(homepage_file)
+            with open(local_file_location('homepage.txt'), 'rb') as wwwfile:
+                self.wfile.write(wwwfile.read())
         elif self.path.endswith('.ppd'):
             self.send_headers(
                 status=200, content_type='text/plain'
@@ -118,8 +121,8 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
             self.send_headers(
                 status=404, content_type='text/plain'
             )
-            with open(local_file_location('404.txt'), 'rb') as homepage_file:
-                self.wfile.write(homepage_file)
+            with open(local_file_location('404.txt'), 'rb') as wwwfile:
+                self.wfile.write(wwwfile.read())
 
     def handle_expect_100(self):
         """ Disable """
