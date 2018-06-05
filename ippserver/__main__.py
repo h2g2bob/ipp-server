@@ -17,7 +17,7 @@ else:
 
 from . import behaviour
 from .pc2paper import Pc2Paper
-from .server import run_server, ThreadedTCPServer, ThreadedTCPRequestHandler
+from .server import run_server, IPPServer, IPPRequestHandler
 
 
 def parse_args(args=None):
@@ -56,6 +56,7 @@ def parse_args(args=None):
 
     return parser.parse_args(args)
 
+
 def behaviour_from_parsed_args(args):
     if args.action == 'save':
         return behaviour.SaveFilePrinter(
@@ -84,13 +85,14 @@ def behaviour_from_parsed_args(args):
         return behaviour.RejectAllPrinter()
     raise RuntimeError(args)
 
+
 def main(args=None):
     parsed_args = parse_args(args)
     logging.basicConfig(level=logging.DEBUG if parsed_args.verbose else logging.INFO)
 
-    server = ThreadedTCPServer(
+    server = IPPServer(
         (parsed_args.host, parsed_args.port),
-        ThreadedTCPRequestHandler,
+        IPPRequestHandler,
         behaviour_from_parsed_args(parsed_args))
     run_server(server)
 

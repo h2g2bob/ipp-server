@@ -31,7 +31,7 @@ class Value(object):
 
 class Boolean(Value):
     def __init__(self, value):
-        assert type(value) is bool
+        assert isinstance(value, bool)
         self.boolean = value
         Value.__init__(self)
 
@@ -46,7 +46,7 @@ class Boolean(Value):
 
 class Integer(Value):
     def __init__(self, value):
-        assert type(value) is int
+        assert isinstance(value, int)
         self.integer = value
         Value.__init__(self)
 

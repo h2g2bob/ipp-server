@@ -37,7 +37,7 @@ class IppRequest(object):
 
     @classmethod
     def from_file(cls, f):
-        version = read_struct(f, b'>bb') # (major, minor)
+        version = read_struct(f, b'>bb')  # (major, minor)
         operation_id_or_status_code, request_id = read_struct(f, b'>hi')
 
         attributes = {}
