@@ -23,16 +23,14 @@ def local_file_location(filename):
     return os.path.join(os.path.dirname(__file__), 'data', filename)
 
 
-class ConnectionClosedError(Exception):
-    pass
-
-
 def _get_next_chunk(rfile):
     while True:
         chunk_size_s = rfile.readline()
         logging.debug('chunksz=%r', chunk_size_s)
         if not chunk_size_s:
-            raise ConnectionClosedError('Socket closed in the middle of a chunked request')
+            raise RuntimeError(
+                'Socket closed in the middle of a chunked request'
+            )
         if chunk_size_s.strip() != b'':
             break
 
@@ -57,6 +55,7 @@ def read_chunked(rfile):
 
 class IPPRequestHandler(BaseHTTPRequestHandler):
     default_request_version = "HTTP/1.1"
+    protocol_version = "HTTP/1.1"
 
     def parse_request(self):
         ret = BaseHTTPRequestHandler.parse_request(self)
@@ -89,15 +88,17 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         logging.debug(format, *args)
 
-    def send_headers(self, status=200, content_type='text/plain'):
+    def send_headers(self, status=200, content_type='text/plain',
+                     content_length=None):
         self.log_request(status)
         self.send_response_only(status, None)
         self.send_header('Server', 'ipp-server')
         self.send_header('Date', self.date_time_string())
-        self.send_header('ContentType', content_type)
+        self.send_header('Content-Type', content_type)
+        if content_length:
+            self.send_header('Content-Length', '%i' % content_length)
         self.send_header('Connection', 'close')
         self.end_headers()
-        self.wfile.flush()
 
     def do_POST(self):
         self.handle_ipp()
@@ -137,13 +138,16 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
             )
             postscript_file = self.rfile.read()
         else:
-            self.send_headers(status=200, content_type='application/ipp')
             postscript_file = None
 
         ipp_response = self.server.behaviour.handle_ipp(
             self.ipp_request, postscript_file
+        ).to_string()
+        self.send_headers(
+            status=200, content_type='application/ipp',
+            content_length=len(ipp_response)
         )
-        self.wfile.write(ipp_response.to_string())
+        self.wfile.write(ipp_response)
 
 
 class IPPServer(socketserver.ThreadingTCPServer):
