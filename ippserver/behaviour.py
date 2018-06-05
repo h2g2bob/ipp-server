@@ -50,7 +50,10 @@ class Behaviour(object):
 
     def handle_ipp(self, ipp_request, postscript_file):
         command_function = self.get_handle_command_function(ipp_request.opid_or_status)
-        logging.debug('IPP %r -> %r', ipp_request.opid_or_status, command_function)
+        logging.debug(
+            'IPP %r -> %s.%s', ipp_request.opid_or_status, type(self).__name__,
+            command_function.__name__
+        )
         return command_function(ipp_request, postscript_file)
 
     def get_handle_command_function(self, opid_or_status):

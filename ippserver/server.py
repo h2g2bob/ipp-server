@@ -83,6 +83,12 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
                 ).encode('latin-1', 'strict')
             )
 
+    def log_error(self, format, *args):
+        logging.error(format, *args)
+
+    def log_message(self, format, *args):
+        logging.debug(format, *args)
+
     def send_headers(self, status=200, content_type='text/plain'):
         self.log_request(status)
         self.send_response_only(status, None)
