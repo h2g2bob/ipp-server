@@ -25,7 +25,7 @@ def get_job_id(req):
     return Integer.from_bytes(
             req.only(
                 SectionEnum.operation,
-                'job-id',
+                b'job-id',
                 TagEnum.integer
             )
         ).integer
