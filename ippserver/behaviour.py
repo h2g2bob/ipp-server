@@ -471,7 +471,7 @@ class SaveFilePrinter(StatelessPrinter):
                 diskfile.write(block)
         self.run_after_saving(filename, ipp_request)
 
-    def run_after_saving(self, filename):
+    def run_after_saving(self, filename, ipp_request):
         pass
 
     def filename(self, ipp_request):
