@@ -43,14 +43,13 @@ def _get_next_chunk(rfile):
 
 
 def read_chunked(rfile):
-    chunks = []
     while True:
         chunk = _get_next_chunk(rfile)
         if chunk == b'':
+            rfile.close()
             break
-        chunks.append(chunk)
-
-    return b''.join(chunks)
+        else:
+            yield chunk
 
 
 class IPPRequestHandler(BaseHTTPRequestHandler):
@@ -60,9 +59,7 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
     def parse_request(self):
         ret = BaseHTTPRequestHandler.parse_request(self)
         if 'chunked' in self.headers.get('transfer-encoding', ''):
-            r = read_chunked(self.rfile)
-            self.rfile.close()
-            self.rfile = BytesIO(r)
+            self.rfile = BytesIO(b"".join(read_chunked(self.rfile)))
         self.close_connection = True
         return ret
 
@@ -136,7 +133,7 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
             self.send_headers(
                 status=100, content_type='application/ipp'
             )
-            postscript_file = self.rfile.read()
+            postscript_file = self.rfile
         else:
             postscript_file = None
 
