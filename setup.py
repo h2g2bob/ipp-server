@@ -7,7 +7,7 @@ REQUIREMENTS = [
 ]
 
 setup(
-      name='ipp-server',
+      name='ippserver',
       author="David Batley",
       author_email="git@dbatley.com",
       license="BSD2",
