@@ -171,8 +171,9 @@ class StatelessPrinter(Behaviour):
         # Should have all these attributes:
         # https://tools.ietf.org/html/rfc2911#section-4.3
 
+        job_id = get_job_id(req)
         attributes = self.print_job_attributes(
-            get_job_id(req),
+            job_id,
             JobStateEnum.completed,
             [b'none']
         )
@@ -329,7 +330,7 @@ class StatelessPrinter(Behaviour):
 
     def print_job_attributes(self, job_id, state, state_reasons):
         # state reasons come from rfc2911 section 4.3.8
-        job_uri = b'%sjob/%s' % (self.base_uri, Integer(job_id).bytes())
+        job_uri = b'%sjob/%d' % (self.base_uri, job_id,)
         attr = {
             # Required for print-job:
             (
