@@ -1,7 +1,6 @@
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
-from __future__ import unicode_literals
 
 import argparse
 import logging
@@ -9,15 +8,12 @@ import importlib
 import sys, os.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-if sys.version_info[0] < 3:
-    __package__ = b"ippserver"
-else:
-    __package__ = "ippserver"
+__package__ = "ippserver"
 
 
 from . import behaviour
 from .pc2paper import Pc2Paper
-from .server import run_server, ThreadedTCPServer, ThreadedTCPRequestHandler
+from .server import run_server, IPPServer, IPPRequestHandler
 
 
 def parse_args(args=None):
@@ -56,6 +52,7 @@ def parse_args(args=None):
 
     return parser.parse_args(args)
 
+
 def behaviour_from_parsed_args(args):
     if args.action == 'save':
         return behaviour.SaveFilePrinter(
@@ -84,13 +81,14 @@ def behaviour_from_parsed_args(args):
         return behaviour.RejectAllPrinter()
     raise RuntimeError(args)
 
+
 def main(args=None):
     parsed_args = parse_args(args)
     logging.basicConfig(level=logging.DEBUG if parsed_args.verbose else logging.INFO)
 
-    server = ThreadedTCPServer(
+    server = IPPServer(
         (parsed_args.host, parsed_args.port),
-        ThreadedTCPRequestHandler,
+        IPPRequestHandler,
         behaviour_from_parsed_args(parsed_args))
     run_server(server)
 

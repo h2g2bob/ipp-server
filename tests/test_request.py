@@ -7,9 +7,10 @@ from __future__ import unicode_literals
 import sys, os.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from ippserver.http_transport import HttpTransport
+from ippserver.server import IPPRequestHandler
 from ippserver.constants import OperationEnum, TagEnum, SectionEnum
 from ippserver.request import IppRequest
+from ippserver.behaviour import RejectAllPrinter
 
 from io import BytesIO
 import logging
@@ -74,14 +75,47 @@ class TestIppRequest(unittest.TestCase):
                 b'user']})
 
 
+class MockRequest(object):
+    rfile = None
+    wfile = None
+
+    def __init__(self, input):
+        self.rfile = BytesIO(input)
+        self.wfile = BytesIO()
+
+    def settimeout(self, _timeout):
+        pass
+
+    def setsockopt(self, *_args, **_kwargs):
+        pass
+
+    def sendall(self, *_args):
+        pass
+
+    def makefile(self, mode, _size):
+        if mode == "wb":
+            return self.wfile
+        elif mode == "rb":
+            return self.rfile
+        else:
+            raise ValueError()
+
+
+class MockServer(object):
+    behaviour = None
+    def __init__(self, behaviour):
+        self.behaviour = behaviour
+
+
 class TestPrintTestPage(unittest.TestCase):
     def test_strange_request(self):
         data = b'POST /printers/ipp-printer.py HTTP/1.1\r\nContent-Type: application/ipp\r\nHost: localhost:1234\r\nTransfer-Encoding: chunked\r\nUser-Agent: CUPS/1.7.5 (Linux 3.16.0-4-amd64; x86_64) IPP/2.0\r\nExpect: 100-continue\r\n\r\nbf\r\n\x02\x00\x00\x02\x00\x00\x00\x04\x01G\x00\x12attributes-charset\x00\x05utf-8H\x00\x1battributes-natural-language\x00\x05en-gbE\x00\x0bprinter-uri\x00,ipp://localhost:1234/printers/ipp-printer.pyB\x00\x14requesting-user-name\x00\x04userB\x00\x08job-name\x00\x0e12 - Test page\x03\r\n0\r\n\r\n'
-        input = BytesIO(data)
-        http_transport = HttpTransport(input, BytesIO())
-        http_transport.recv_headers()
-        req = IppRequest.from_file(http_transport.recv_body())
-        self.assertEqual(req.opid_or_status, OperationEnum.print_job)
+
+        request = IPPRequestHandler(
+            MockRequest(data), "127.0.0.1", MockServer(RejectAllPrinter())
+        )
+
+        self.assertEqual(request.ipp_request.opid_or_status, OperationEnum.print_job)
 
 
 if __name__ == '__main__':

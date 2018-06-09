@@ -1,7 +1,6 @@
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
-from __future__ import unicode_literals
 
 
 class PPD(object):
@@ -17,39 +16,45 @@ class BasicPostscriptPPD(PPD):
     def text(self):
         return b'''*PPD-Adobe: "4.3"
 
-*% This is a minimal config file
-*% and is almost certainly missing lots of features
+*%% This is a minimal config file
+*%% and is almost certainly missing lots of features
 
-*%     ___________
-*%    |           |
-*%    | PPD File. |
-*%    |           |
-*%  (============(@|
-*%  |            | |
-*%  | [        ] | |
-*%  |____________|/
-*%
+*%%     ___________
+*%%    |           |
+*%%    | PPD File. |
+*%%    |           |
+*%%  (============(@|
+*%%  |            | |
+*%%  | [        ] | |
+*%%  |____________|/
+*%%
 
-*% About this PPD file
+*%% About this PPD file
 *LanguageLevel: "2"
 *LanguageEncoding: ISOLatin1
 *LanguageVersion: English
-*PCFileName: "{ppdfilename}"
+*PCFileName: "%(ppdfilename)s"
 
-*% Basic capabilities of the device
+*%% Basic capabilities of the device
 *FileSystem: False
 
-*% Printer name
-*Product: "{product}"
-*Manufacturer:  "{manufacturer}"
-*ModelName: "{model}"
+*%% Printer name
+*Product: "%(product)s"
+*Manufacturer:  "%(manufacturer)s"
+*ModelName: "%(model)s"
 
-*% Color
+*%% Color
 *ColorDevice: True
 *DefaultColorSpace: CMYK
 *Throughput: "1"
 *Password: "0"
-'''.format(product=self.product, manufacturer=self.manufacturer, model=self.model, ppdfilename=self.model + '.ppd')
+''' % \
+{
+    b"product": self.product.encode("ascii"),
+    b"manufacturer": self.manufacturer.encode("ascii"),
+    b"model": self.model.encode("ascii"),
+    b"ppdfilename": b"%s%s" % (self.model.encode("ascii"), b'.ppd')
+}
 
 
 class BasicPdfPPD(BasicPostscriptPPD):
