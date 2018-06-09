@@ -22,7 +22,7 @@ setup(
       },
       classifiers=[
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD2 License',
+        'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries :: Python Modules'],
       install_requires=REQUIREMENTS,
