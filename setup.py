@@ -9,6 +9,7 @@ REQUIREMENTS = [
 setup(
       name='ipp-server',
       author="David Batley",
+      author_email="git@dbatley.com",
       license="BSD2",
       description='An ipp server',
       version='0.2',
