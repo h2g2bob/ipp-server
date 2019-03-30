@@ -17,7 +17,7 @@ from .parsers import Integer, Enum, Boolean
 from .constants import (
     JobStateEnum, OperationEnum, StatusCodeEnum, SectionEnum, TagEnum
 )
-from .ppd import BasicPostscriptPPD, BasicPdfPPD
+from .ppd import BasicPostscriptPPD, BasicPdfPPD, FilePPD
 from .request import IppRequest
 
 
@@ -468,14 +468,17 @@ class RejectAllPrinter(StatelessPrinter):
 
 
 class SaveFilePrinter(StatelessPrinter):
-    def __init__(self, uri, directory, filename_ext):
+    def __init__(self, uri, ppdfile, directory, filename_ext):
         self.directory = directory
         self.filename_ext = filename_ext
 
-        ppd = {
-            'ps': BasicPostscriptPPD(),
-            'pdf': BasicPdfPPD(),
-        }[filename_ext]
+        if ppdfile:
+            ppd = FilePPD(ppdfile)
+        else:
+            ppd = {
+                'ps': BasicPostscriptPPD(),
+                'pdf': BasicPdfPPD(),
+            }[filename_ext]
 
         super(SaveFilePrinter, self).__init__(uri=uri, ppd=ppd)
 
@@ -500,11 +503,11 @@ class SaveFilePrinter(StatelessPrinter):
 
 
 class SaveAndRunPrinter(SaveFilePrinter):
-    def __init__(self, uri, directory, use_env, filename_ext, command):
+    def __init__(self, uri, ppdfile, directory, use_env, filename_ext, command):
         self.command = command
         self.use_env = use_env
         super(SaveAndRunPrinter, self).__init__(
-            uri=uri, directory=directory, filename_ext=filename_ext
+            uri=uri, ppdfile=ppdfile, directory=directory, filename_ext=filename_ext
         )
 
     def run_after_saving(self, filename, ipp_request):
@@ -521,14 +524,17 @@ class SaveAndRunPrinter(SaveFilePrinter):
 
 
 class RunCommandPrinter(StatelessPrinter):
-    def __init__(self, uri, command, use_env, filename_ext):
+    def __init__(self, uri, ppdfile, command, use_env, filename_ext):
         self.command = command
         self.use_env = use_env
 
-        ppd = {
-            'ps': BasicPostscriptPPD(),
-            'pdf': BasicPdfPPD(),
-        }[filename_ext]
+        if ppdfile:
+            ppd = FilePPD(ppdfile)
+        else:
+            ppd = {
+                'ps': BasicPostscriptPPD(),
+                'pdf': BasicPdfPPD(),
+            }[filename_ext]
 
         super(RunCommandPrinter, self).__init__(uri=uri, ppd=ppd)
 
@@ -549,14 +555,17 @@ class RunCommandPrinter(StatelessPrinter):
 
 
 class PostageServicePrinter(StatelessPrinter):
-    def __init__(self, uri, service_api, filename_ext):
+    def __init__(self, uri, ppdfile, service_api, filename_ext):
         self.service_api = service_api
         self.filename_ext = filename_ext
 
-        ppd = {
-            'ps': BasicPostscriptPPD(),
-            'pdf': BasicPdfPPD(),
-        }[filename_ext]
+        if ppdfile:
+            ppd = FilePPD(ppdfile)
+        else:
+            ppd = {
+                'ps': BasicPostscriptPPD(),
+                'pdf': BasicPdfPPD(),
+            }[filename_ext]
 
         super(PostageServicePrinter, self).__init__(uri=uri, ppd=ppd)
 

@@ -2,10 +2,22 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
+from .server import local_file_location
+
 
 class PPD(object):
     def text(self):
         raise NotImplementedError()
+
+
+class FilePPD(PPD):
+    def __init__(self, filename):
+        filepath = local_file_location(filename)
+        with open(filepath, "r") as ppdfile:
+            self.ppd = ppdfile.read()
+
+    def text(self):
+        return self.ppd.encode("ascii")
 
 
 class BasicPostscriptPPD(PPD):
