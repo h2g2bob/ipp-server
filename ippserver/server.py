@@ -20,6 +20,8 @@ from . import request
 
 
 def local_file_location(filename):
+    if os.environ.get("IPP_DATA_DIR"):
+        return os.path.join(os.environ.get("IPP_DATA_DIR"), filename)
     return os.path.join(os.path.dirname(__file__), 'data', filename)
 
 
@@ -115,6 +117,12 @@ class IPPRequestHandler(BaseHTTPRequestHandler):
                 status=200, content_type='text/plain'
             )
             self.wfile.write(self.server.behaviour.ppd.text())
+        elif self.path.endswith('.png'):
+            self.send_headers(
+                status=200, content_type='image/png'
+            )
+            with open(local_file_location(os.path.basename(self.path)), 'rb') as wwwfile:
+                self.wfile.write(wwwfile.read())
         else:
             self.send_headers(
                 status=404, content_type='text/plain'

@@ -56,15 +56,18 @@ def parse_args(args=None):
 def behaviour_from_parsed_args(args):
     if args.action == 'save':
         return behaviour.SaveFilePrinter(
+            uri=args.host + ":" + str(args.port),
             directory=args.directory,
             filename_ext='pdf' if args.pdf else 'ps')
     if args.action == 'run':
         return behaviour.RunCommandPrinter(
+            uri=args.host + ":" + str(args.port),
             command=args.command,
             use_env=args.env,
             filename_ext='pdf' if args.pdf else 'ps')
     if args.action == 'saveandrun':
         return behaviour.SaveAndRunPrinter(
+            uri=args.host + ":" + str(args.port),
             command=args.command,
             use_env=args.env,
             directory=args.directory,
@@ -72,6 +75,7 @@ def behaviour_from_parsed_args(args):
     if args.action == 'pc2paper':
         pc2paper_config = Pc2Paper.from_config_file(args.config)
         return behaviour.PostageServicePrinter(
+            uri=args.host + ":" + str(args.port),
             service_api=pc2paper_config,
             filename_ext='pdf' if args.pdf else 'ps')
     if args.action == 'load':

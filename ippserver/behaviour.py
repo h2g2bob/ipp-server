@@ -48,13 +48,21 @@ def prepare_environment(ipp_request):
     return env
 
 
+def env(var):
+    """Get (bytes) value from environment"""
+    value = os.environ.get(var)
+    if value:
+        return value.encode('utf-8')
+
+
 class Behaviour(object):
     """Do anything in response to IPP requests"""
     version = (1, 1)
-    base_uri = b'ipp://localhost:1234/'
-    printer_uri = b'ipp://localhost:1234/printer'
 
-    def __init__(self, ppd=BasicPostscriptPPD()):
+    def __init__(self, uri="localhost:1234", ppd=BasicPostscriptPPD()):
+        self.uri = uri.encode("utf-8")
+        self.base_uri = b'ipp://' + self.uri
+        self.printer_uri = b'ipp://' + self.uri + b'/printer'
         self.ppd = ppd
 
     def expect_page_data_follows(self, ipp_request):
@@ -225,17 +233,17 @@ class StatelessPrinter(Behaviour):
                 SectionEnum.printer,
                 b'printer-name',
                 TagEnum.name_without_language
-            ): [b'ipp-printer.py'],
+            ): [env("IPP_PRINTER_NAME") or b'ipp-printer.py'],
             (
                 SectionEnum.printer,
                 b'printer-info',
                 TagEnum.text_without_language
-            ): [b'Printer using ipp-printer.py'],
+            ): [env("IPP_PRINTER_INFO") or b'Printer using ipp-printer.py'],
             (
                 SectionEnum.printer,
                 b'printer-make-and-model',
                 TagEnum.text_without_language
-            ): [b'h2g2bob\'s ipp-printer.py 0.00'],
+            ): [env("IPP_PRINTER_MAKE_AND_MODEL") or b'h2g2bob\'s ipp-printer.py 0.00'],
             (
                 SectionEnum.printer,
                 b'printer-state',
@@ -324,6 +332,13 @@ class StatelessPrinter(Behaviour):
                 b'compression-supported',
                 TagEnum.keyword
             ): [b'none'],
+            (
+                SectionEnum.printer,
+                b'printer-icons',
+                TagEnum.uri
+            ): [b'http://' + self.uri + b'/printer-small.png',
+                b'http://' + self.uri + b'/printer.png',
+                b'http://' + self.uri + b'/printer-large.png'],
         }
         attr.update(self.minimal_attributes())
         return attr
@@ -453,7 +468,7 @@ class RejectAllPrinter(StatelessPrinter):
 
 
 class SaveFilePrinter(StatelessPrinter):
-    def __init__(self, directory, filename_ext):
+    def __init__(self, uri, directory, filename_ext):
         self.directory = directory
         self.filename_ext = filename_ext
 
@@ -462,7 +477,7 @@ class SaveFilePrinter(StatelessPrinter):
             'pdf': BasicPdfPPD(),
         }[filename_ext]
 
-        super(SaveFilePrinter, self).__init__(ppd=ppd)
+        super(SaveFilePrinter, self).__init__(uri=uri, ppd=ppd)
 
     def handle_postscript(self, ipp_request, postscript_file):
         filename = self.filename(ipp_request)
@@ -485,11 +500,11 @@ class SaveFilePrinter(StatelessPrinter):
 
 
 class SaveAndRunPrinter(SaveFilePrinter):
-    def __init__(self, directory, use_env, filename_ext, command):
+    def __init__(self, uri, directory, use_env, filename_ext, command):
         self.command = command
         self.use_env = use_env
         super(SaveAndRunPrinter, self).__init__(
-            directory=directory, filename_ext=filename_ext
+            uri=uri, directory=directory, filename_ext=filename_ext
         )
 
     def run_after_saving(self, filename, ipp_request):
@@ -506,7 +521,7 @@ class SaveAndRunPrinter(SaveFilePrinter):
 
 
 class RunCommandPrinter(StatelessPrinter):
-    def __init__(self, command, use_env, filename_ext):
+    def __init__(self, uri, command, use_env, filename_ext):
         self.command = command
         self.use_env = use_env
 
@@ -515,7 +530,7 @@ class RunCommandPrinter(StatelessPrinter):
             'pdf': BasicPdfPPD(),
         }[filename_ext]
 
-        super(RunCommandPrinter, self).__init__(ppd=ppd)
+        super(RunCommandPrinter, self).__init__(uri=uri, ppd=ppd)
 
     def handle_postscript(self, ipp_request, postscript_file):
         logging.info('Running command for job')
@@ -534,7 +549,7 @@ class RunCommandPrinter(StatelessPrinter):
 
 
 class PostageServicePrinter(StatelessPrinter):
-    def __init__(self, service_api, filename_ext):
+    def __init__(self, uri, service_api, filename_ext):
         self.service_api = service_api
         self.filename_ext = filename_ext
 
@@ -543,7 +558,7 @@ class PostageServicePrinter(StatelessPrinter):
             'pdf': BasicPdfPPD(),
         }[filename_ext]
 
-        super(PostageServicePrinter, self).__init__(ppd=ppd)
+        super(PostageServicePrinter, self).__init__(uri=uri, ppd=ppd)
 
     def handle_postscript(self, _ipp_request, postscript_file):
         filename = b'ipp-server-{}.{}'.format(
