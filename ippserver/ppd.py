@@ -9,6 +9,36 @@ class PPD(object):
     def text(self):
         raise NotImplementedError()
 
+    def document_format_default(self):
+        """Scan the PPD for *cupsFilter2 and extract the 'best final' MIME-type"""
+        types = []
+        for line in self.text().split(b'\n'):
+            if line.startswith(b'*cupsFilter2'):
+                line = line.split(b':', maxsplit=1)[1].strip().lstrip(b'"').rstrip(b'"')
+                types.append(dict(zip(("src", "dst", "cost", "filter"), line.split())))
+        types = sorted(types, key=lambda type: type["cost"])
+        destination_types = [type["src"] for type in types]
+        if destination_types:
+            return [destination_types[0]]
+        else:
+            # assume PostScript
+            return [b'application/postscript']
+
+    def document_format_supported(self):
+        """Scan the PPD for *cupsFilter2 and extract the 'supported' MIME-types"""
+        types = []
+        for line in self.text().split(b'\n'):
+            if line.startswith(b'*cupsFilter2'):
+                line = line.split(b':', maxsplit=1)[1].strip().lstrip(b'"').rstrip(b'"')
+                types.append(dict(zip(("src", "dst", "cost", "filter"), line.split())))
+        types = sorted(types, key=lambda type: type["cost"])
+        destination_types = [type["src"] for type in types]
+        if destination_types:
+            return destination_types
+        else:
+            # assume PostScript
+            return [b'application/postscript', b'application/octet-stream']
+
 
 class FilePPD(PPD):
     def __init__(self, filename):

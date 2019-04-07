@@ -301,12 +301,12 @@ class StatelessPrinter(Behaviour):
                 SectionEnum.printer,
                 b'document-format-default',
                 TagEnum.mime_media_type
-            ): [b'application/pdf'],
+            ): self.ppd.document_format_default(),
             (
                 SectionEnum.printer,
                 b'document-format-supported',
                 TagEnum.mime_media_type
-            ): [b'application/pdf'],
+            ): self.ppd.document_format_supported(),
             (
                 SectionEnum.printer,
                 b'printer-is-accepting-jobs',
